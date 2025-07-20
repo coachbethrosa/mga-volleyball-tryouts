@@ -5,8 +5,8 @@ const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbyd2g0E_LHFV2cEg2-
 
 const CONFIG = {
     // Refresh intervals (in milliseconds)
-    dashboardRefreshInterval: 30000, // 30 seconds
-    playersRefreshInterval: 15000,   // 15 seconds
+    dashboardRefreshInterval: 60000, // 1 min
+    playersRefreshInterval: 180000000,   // 3 min
     
     // Debug mode - set to false for production
     DEBUG: true,
