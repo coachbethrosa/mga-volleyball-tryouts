@@ -1,1 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Photo Review - MGA Volleyball Tryouts</title>
+    <link rel="icon" type="image/png" href="https://mgavolleyball.com/wp-content/uploads/2023/07/mga-logo-277x300.png">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <img src="https://mgavolleyball.com/wp-content/uploads/2023/07/mga-logo-277x300.png" 
+                 alt="MGA Volleyball Logo" 
+                 class="logo">
+            <div class="header-text">
+                <h1 id="page-title">📷 Photo Review</h1>
+            </div>
+        </div>
+        <a href="index.html" class="nav-btn secondary">📊 Dashboard</a>
+    </div>
+    
+    <div class="nav-tabs" id="navigation-tabs">
+        <div class="loading">Loading sessions...</div>
+    </div>
+    
+    <div class="controls">
+        <div class="stats" id="session-stats">
+            Select a session to view players
+        </div>
+        <div class="sort-controls">
+            <a href="#" class="sort-btn" id="sort-name" onclick="sortPlayers('name'); return false;">📝 Name</a>
+            <a href="#" class="sort-btn" id="sort-pinny" onclick="sortPlayers('pinny'); return false;">📍 Pinny</a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="photo-grid" id="players-container">
+            <div class="loading">Select a session above to view players</div>
+        </div>
+    </div>
 
+    <!-- Camera Modal -->
+    <div id="camera-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCameraModal()">&times;</span>
+            <h3 id="camera-modal-title">📸 Capture Photo</h3>
+            <div id="camera-container">
+                <video id="camera-video" autoplay playsinline style="display: none; width: 100%; max-width: 400px; border-radius: 10px;"></video>
+                <canvas id="camera-canvas" style="display: none;"></canvas>
+                <img id="captured-image" style="display: none; max-width: 100%; border-radius: 8px;">
+                <div id="camera-placeholder" style="padding: 2rem; text-align: center; color: #666;">
+                    📷<br><small>Click "Start Camera" to begin</small>
+                </div>
+            </div>
+            <div class="camera-controls">
+                <button id="start-camera-btn" class="staff-btn photo-btn">📷 Start Camera</button>
+                <button id="take-photo-btn" class="staff-btn checkin-btn" style="display: none;">📸 Take Photo</button>
+                <button id="retake-btn" class="staff-btn photo-btn" style="display: none;">🔄 Retake</button>
+                <button id="submit-photo-btn" class="staff-btn checkin-btn" style="display: none;">✅ Submit Photo</button>
+                <button onclick="closeCameraModal()" class="staff-btn photo-btn">❌ Cancel</button>
+            </div>
+            <div id="camera-status" style="margin-top: 1rem; text-align: center; font-weight: 600;"></div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/players.js"></script>
+</body>
+</html>
