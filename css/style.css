@@ -1,1 +1,792 @@
+/* MGA Volleyball Tryouts - Your Original Mobile-Optimized Design */
 
+* { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+}
+
+html, body { 
+    width: 100%; 
+    overflow-x: hidden; 
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #4169E1 0%, #191970 100%);
+    min-height: 100vh;
+    color: #333;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Header Styles - Your Original Design */
+.header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 20px;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo {
+    max-height: 50px;
+    max-width: 60px;
+    object-fit: contain;
+}
+
+.header-text h1 {
+    color: #000000;
+    font-size: 1.3rem;
+    margin-bottom: 5px;
+    line-height: 1.2;
+    font-weight: bold;
+    text-align: left;
+}
+
+.header-text .subtitle {
+    color: #495057;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: left;
+}
+
+.header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.view-players-btn, .nav-btn {
+    background: #DC143C;
+    color: white;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-block;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(220, 20, 60, 0.3);
+}
+
+.view-players-btn:hover, .nav-btn:hover {
+    background: #B91C1C;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(220, 20, 60, 0.4);
+    text-decoration: none;
+    color: white;
+}
+
+.nav-btn.secondary {
+    background: #4169E1;
+    box-shadow: 0 4px 15px rgba(65, 105, 225, 0.3);
+}
+
+.nav-btn.secondary:hover {
+    background: #3151c1;
+    box-shadow: 0 6px 20px rgba(65, 105, 225, 0.4);
+}
+
+/* Dashboard Styles - Your Original Design */
+.refresh-info {
+    background: #4169E1;
+    color: white;
+    padding: 12px;
+    text-align: center;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-weight: 600;
+    display: block;
+    text-decoration: none;
+}
+
+.refresh-info:hover {
+    background: #3151c1;
+    color: white;
+    text-decoration: none;
+}
+
+.container {
+    padding: 16px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 20px 16px;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+.stat-number {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #000000;
+    margin-bottom: 8px;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: #495057;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+}
+
+.percentage {
+    font-size: 1.1rem;
+    color: #4169E1;
+    font-weight: 800;
+}
+
+.location-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+.location-header {
+    background: #000000;
+    color: white;
+    padding: 16px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border-radius: 20px 20px 0 0;
+}
+
+.age-groups {
+    padding: 16px;
+}
+
+.age-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 2px solid #ecf0f1;
+}
+
+.age-row:last-child {
+    border-bottom: none;
+}
+
+.age-label {
+    font-weight: 800;
+    color: #000000;
+    font-size: 0.9rem;
+    min-width: 45px;
+    flex-shrink: 0;
+}
+
+.progress-container {
+    background: #ecf0f1;
+    border-radius: 15px;
+    height: 10px;
+    flex: 1;
+    min-width: 0;
+}
+
+.progress-bar {
+    height: 100%;
+    border-radius: 15px;
+    transition: width 0.3s ease;
+}
+
+.progress-good { background: linear-gradient(90deg, #DC143C, #B91C1C); }
+.progress-warning { background: linear-gradient(90deg, #f39c12, #e67e22); }
+.progress-critical { background: linear-gradient(90deg, #6c757d, #545b62); }
+
+.count {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #000000;
+    min-width: 60px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.selfie-count {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #4169E1;
+    min-width: 35px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.status-indicator {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.status-good { background: #DC143C; }
+.status-warning { background: #f39c12; }
+.status-critical { background: #6c757d; }
+
+.last-updated {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+    margin-top: 20px;
+    font-weight: 600;
+}
+
+/* RELIABLE NAVIGATION TABS - Your Original Design */
+.nav-tabs {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    display: block;
+}
+
+.nav-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.nav-tab {
+    display: inline-block;
+    background: #ecf0f1;
+    color: #333;
+    border: none;
+    padding: 8px 12px;
+    margin-right: 8px;
+    border-radius: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    vertical-align: top;
+}
+
+.nav-tab:hover {
+    background: #3151c1;
+    color: white;
+    text-decoration: none;
+}
+
+.nav-tab.active {
+    background: #4169E1;
+    color: white;
+}
+
+/* Controls Section */
+.controls {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 6px;
+    border-radius: 8px;
+}
+
+.stats {
+    font-weight: 600;
+    color: #333;
+    font-size: 0.8rem;
+}
+
+.sort-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.sort-btn {
+    background: #4169E1;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.7rem;
+    text-decoration: none;
+}
+
+.sort-btn.active {
+    background: #DC143C;
+}
+
+/* MOBILE-FIRST: Photo grid - single column on mobile - Your Original Design */
+.photo-grid {
+    display: block;
+    width: 100%;
+    padding: 0 10px;
+}
+
+.player-card {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+    width: 100%;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.player-card:hover {
+    transform: translateY(-2px);
+}
+
+.player-card.checked-in {
+    border: 3px solid #DC143C;
+}
+
+.photo-container {
+    position: relative;
+    height: 300px;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.player-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.no-photo {
+    color: #999;
+    font-size: 1.2rem;
+    cursor: pointer;
+    text-align: center;
+    padding: 20px;
+}
+
+.no-photo:hover {
+    color: #4169E1;
+    transform: scale(1.05);
+}
+
+.photo-status {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.player-info {
+    padding: 15px;
+}
+
+.player-name-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.player-name {
+    font-size: 1.05rem;
+    font-weight: bold;
+    color: #333;
+    flex: 1;
+}
+
+.player-hand {
+    font-weight: 600;
+    color: #4169E1;
+    font-size: 0.85rem;
+    margin-left: 10px;
+    background: #e8f1ff;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.player-details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2px 0;
+}
+
+.detail-pair {
+    display: flex;
+    gap: 15px;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.detail-left {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 0.35;
+    min-width: 0;
+}
+
+.detail-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 0.65;
+    justify-content: flex-end;
+    min-width: 0;
+}
+
+.detail-label {
+    font-weight: 700;
+    color: #666;
+    font-size: 0.75rem;
+}
+
+.detail-value {
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.detail-value.position {
+    color: #DC143C;
+}
+
+.detail-value.pinny {
+    color: #4169E1;
+}
+
+.detail-value.school {
+    color: #333;
+}
+
+.detail-value.city {
+    color: #666;
+}
+        
+.staff-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.staff-btn {
+    flex: 1;
+    padding: 12px 15px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    text-align: center;
+    min-height: 44px;
+}
+
+.checkin-btn {
+    background: #28a745;
+    color: white;
+}
+
+.checkin-btn:hover:not(.disabled) {
+    background: #218838;
+}
+
+.checkin-btn.disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+.photo-btn {
+    background: #007bff;
+    color: white;
+}
+
+.photo-btn:hover {
+    background: #0056b3;
+}
+
+/* Loading and Error States */
+.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e9ecef;
+    border-top: 4px solid #4169E1;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.error {
+    text-align: center;
+    padding: 40px 20px;
+    color: #dc3545;
+}
+
+.error-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.error-message {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.error-technical {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 20px;
+}
+
+.retry-btn {
+    background: #4169E1;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.retry-btn:hover {
+    background: #3151c1;
+}
+
+/* Camera Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+.modal-content {
+    background: white;
+    margin: 5% auto;
+    padding: 2rem;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.close {
+    float: right;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    color: #999;
+}
+
+.close:hover {
+    color: #000;
+}
+
+/* Tablet: 2 columns */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .photo-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    .player-card {
+        margin-bottom: 0;
+    }
+    
+    .header {
+        flex-direction: row;
+        text-align: left;
+    }
+    
+    .header-left {
+        flex-direction: row;
+    }
+    
+    .header-text h1 { 
+        text-align: left; 
+    }
+    
+    .header-text .subtitle { 
+        text-align: left; 
+    }
+}
+
+/* Desktop: 3 columns */
+@media (min-width: 1025px) {
+    .photo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 25px;
+        padding: 0 20px;
+    }
+    
+    .photo-container {
+        height: 320px;
+    }
+    
+    .player-card {
+        margin-bottom: 0;
+    }
+}
+
+/* Mobile optimizations - Your original responsive design */
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        text-align: center;
+        gap: 12px;
+        padding: 15px;
+    }
+    
+    .header-left {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .header-text h1 { 
+        font-size: 1.1rem; 
+        text-align: center; 
+    }
+    
+    .header-text .subtitle { 
+        font-size: 0.8rem; 
+        text-align: center; 
+    }
+    
+    .stat-number { 
+        font-size: 1.8rem; 
+    }
+    
+    .stat-label { 
+        font-size: 0.7rem; 
+    }
+    
+    .age-label { 
+        font-size: 0.8rem; 
+        min-width: 40px; 
+    }
+    
+    .count, .selfie-count { 
+        font-size: 0.8rem; 
+    }
+    
+    .location-header { 
+        font-size: 1rem; 
+    }
+    
+    .view-players-btn { 
+        font-size: 0.8rem; 
+        padding: 8px 14px;
+    }
+    
+    .container { 
+        padding: 12px; 
+    }
+    
+    .stats-grid { 
+        gap: 10px; 
+    }
+    
+    .stat-card { 
+        padding: 16px 12px; 
+    }
+}
+
+/* Extra small phones */
+@media (max-width: 480px) {
+    .photo-grid {
+        padding: 0 5px;
+        gap: 12px;
+    }
+    
+    .photo-container {
+        height: 280px;
+    }
+    
+    .player-info {
+        padding: 12px;
+    }
+    
+    .player-name {
+        font-size: 0.95rem;
+    }
+    
+    .staff-btn {
+        font-size: 0.75rem;
+        padding: 10px 12px;
+    }
+    
+    .detail-label {
+        font-size: 0.7rem;
+    }
+    
+    .detail-value {
+        font-size: 0.8rem;
+    }
+}
