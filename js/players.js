@@ -272,6 +272,25 @@ async function checkInPlayer(player) {
         return;
     }
     
+    // Find the button that was clicked and show immediate feedback
+    const buttons = document.querySelectorAll('.checkin-btn');
+    let clickedButton = null;
+    
+    buttons.forEach(btn => {
+        if (btn.textContent.includes('Check In') && !btn.disabled) {
+            // This is likely the button for this player
+            if (btn.onclick && btn.onclick.toString().includes(player.playerID)) {
+                clickedButton = btn;
+            }
+        }
+    });
+    
+    if (clickedButton) {
+        clickedButton.disabled = true;
+        clickedButton.textContent = '⏳ Checking in...';
+        clickedButton.style.background = '#ffc107';
+    }
+    
     try {
         window.debugLog('Checking in player:', player);
         
@@ -284,6 +303,10 @@ async function checkInPlayer(player) {
         });
         
         if (result.success) {
+            if (clickedButton) {
+                clickedButton.textContent = '✅ Checked In';
+                clickedButton.style.background = '#28a745';
+            }
             alert(`✅ ${player.first} ${player.last} checked in successfully!`);
             loadPlayers(); // Refresh the list
         } else {
@@ -292,6 +315,14 @@ async function checkInPlayer(player) {
         
     } catch (error) {
         console.error('Check-in error:', error);
+        
+        // Reset button on error
+        if (clickedButton) {
+            clickedButton.disabled = false;
+            clickedButton.textContent = '📝 Check In';
+            clickedButton.style.background = '#28a745';
+        }
+        
         alert(`❌ Check-in failed: ${error.message}`);
     }
 }
