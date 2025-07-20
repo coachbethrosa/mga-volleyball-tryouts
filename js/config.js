@@ -1,7 +1,7 @@
 // MGA Volleyball Tryouts - Configuration
 // Replace YOUR_SCRIPT_ID with your actual Google Apps Script web app URL
 
-const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbxCEKdMQzDy5LDwEtVJf5FxeUzbhHpkkVmAk3IQc57VtWZ9ByX5SUuHLn6l4kNlcY_2yg/exec';
+const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbzcNFgvgvcH_W1sd5qHwn2KDDCfhMQ9nVGw9d-vPHgxpMFmaXw8IM69EXLDhnebxCORjA/exec';
 
 const CONFIG = {
     // Refresh intervals (in milliseconds)
