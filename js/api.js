@@ -1,32 +1,19 @@
-// MGA Volleyball Tryouts - API Communication Module
+// MGA Volleyball Tryouts - API Communication Module (JSONP - No CORS Issues)
 
 class MGA_API {
     constructor() {
         this.baseUrl = window.API_BASE_URL;
         this.retryCount = 0;
         this.maxRetries = window.CONFIG?.maxRetries || 3;
+        this.callbackCounter = 0;
     }
 
-    // Generic API call with error handling and retries
+    // JSONP request (bypasses CORS)
     async makeRequest(url, options = {}) {
-        const requestOptions = {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            ...options
-        };
-
         try {
-            window.debugLog('API Request:', url);
+            window.debugLog('API Request (JSONP):', url);
             
-            const response = await fetch(url, requestOptions);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const data = await response.json();
+            const data = await this.jsonpRequest(url);
             
             if (data.success === false) {
                 throw new Error(data.error || 'API returned error');
@@ -50,6 +37,49 @@ class MGA_API {
             
             throw error;
         }
+    }
+
+    // JSONP implementation
+    jsonpRequest(url) {
+        return new Promise((resolve, reject) => {
+            this.callbackCounter++;
+            const callbackName = `jsonp_callback_${this.callbackCounter}_${Date.now()}`;
+            
+            // Add callback parameter to URL
+            const separator = url.includes('?') ? '&' : '?';
+            const jsonpUrl = `${url}${separator}callback=${callbackName}`;
+            
+            // Create script element
+            const script = document.createElement('script');
+            script.src = jsonpUrl;
+            
+            // Set up callback
+            window[callbackName] = (data) => {
+                // Clean up
+                document.head.removeChild(script);
+                delete window[callbackName];
+                resolve(data);
+            };
+            
+            // Handle errors
+            script.onerror = () => {
+                document.head.removeChild(script);
+                delete window[callbackName];
+                reject(new Error('JSONP request failed'));
+            };
+            
+            // Add script to page
+            document.head.appendChild(script);
+            
+            // Timeout after 10 seconds
+            setTimeout(() => {
+                if (window[callbackName]) {
+                    document.head.removeChild(script);
+                    delete window[callbackName];
+                    reject(new Error('JSONP request timed out'));
+                }
+            }, 10000);
+        });
     }
 
     // Get dashboard data
@@ -99,13 +129,12 @@ class MGA_API {
         console.error('Connection error:', error);
         
         const errorMessages = {
-            'Failed to fetch': 'Unable to connect to server. Please check your internet connection.',
-            'NetworkError': 'Network error. Please try again.',
-            'TimeoutError': 'Request timed out. Please try again.'
+            'JSONP request failed': 'Unable to connect to server. Please check your internet connection.',
+            'JSONP request timed out': 'Request timed out. Please try again.',
+            'NetworkError': 'Network error. Please try again.'
         };
 
-        const message = errorMessages[error.name] || 
-                       errorMessages[error.message] || 
+        const message = errorMessages[error.message] || 
                        `Connection error: ${error.message}`;
 
         return {
