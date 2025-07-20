@@ -509,26 +509,29 @@ async function submitPhoto() {
     }
 }
 
-// API call for photo submission (placeholder - needs implementation)
+// API call for photo submission (REAL implementation)
 async function submitPhotoToAPI(photoData, player) {
-    // This would call your Apps Script API to process the photo
-    // For now, return success to test the interface
-    console.log('Photo submission for player:', player.playerID);
-    console.log('Photo data size:', photoData.length);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    return { success: true };
-}
+    try {
+        console.log('Submitting photo for player:', player.playerID);
+        
+        const params = new URLSearchParams({
+            action: 'submitPhoto',
+            photoData: photoData,
+            playerID: player.playerID,
+            location: currentLocation,
+            age: currentAge
+        });
 
-function stopCameraStream() {
-    if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
-        cameraStream = null;
+        const url = `${window.API_BASE_URL}?${params.toString()}`;
+        const response = await window.mgaAPI.makeRequest(url);
+        
+        return response;
+        
+    } catch (error) {
+        console.error('Photo submission error:', error);
+        return { success: false, error: error.message };
     }
 }
-
 function resetCameraInterface() {
     const video = document.getElementById('camera-video');
     const capturedImage = document.getElementById('captured-image');
