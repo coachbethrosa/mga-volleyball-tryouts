@@ -1,1 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>MGA Volleyball Tryouts - Live Status</title>
+    <link rel="icon" type="image/png" href="https://mgavolleyball.com/wp-content/uploads/2023/07/mga-logo-277x300.png">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <img src="https://mgavolleyball.com/wp-content/uploads/2023/07/mga-logo-277x300.png" 
+                 alt="MGA Volleyball Logo" 
+                 class="logo">
+            <div class="header-text">
+                <h1>MGA Volleyball Tryouts</h1>
+                <div class="subtitle">Live Check-in Status</div>
+            </div>
+        </div>
+        
+        <div class="header-right">
+            <a href="players.html" class="view-players-btn" id="view-players-link">
+                📷 View Players
+            </a>
+        </div>
+    </div>
+    
+    <a href="#" class="refresh-info" onclick="refreshDashboard(); return false;">
+        Tap here to refresh • Updates automatically when page loads
+    </a>
+    
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="total-expected">0</div>
+                <div class="stat-label">Total Expected</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="checked-in-count">0</div>
+                <div class="stat-label">Checked In</div>
+                <div class="percentage" id="checkin-percentage">0%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="selfies-count">0</div>
+                <div class="stat-label">Selfies</div>
+                <div class="percentage" id="selfie-percentage">0%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="missing-count">0</div>
+                <div class="stat-label">Missing</div>
+            </div>
+        </div>
+        
+        <div id="location-sections">
+            <!-- Location sections will be populated here -->
+        </div>
+        
+        <div class="last-updated">
+            Last updated: <span id="last-updated-time">Never</span>
+        </div>
+    </div>
 
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
