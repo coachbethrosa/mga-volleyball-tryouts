@@ -1,4 +1,4 @@
-// MGA Volleyball Tryouts - Players with Dynamic Multi-Day Check-ins
+// MGA Volleyball Tryouts - Players with Location-Specific Multi-Day Check-ins
 
 let currentLocation = null;
 let currentAge = null;
@@ -9,8 +9,9 @@ let cameraStream = null;
 let currentPhotoPlayer = null;
 
 // Dynamic tryout configuration - loaded from Google Sheets Settings tab
-let TRYOUT_DATES = []; // Will be populated from Settings
-let TRYOUT_NAME = 'MGA Volleyball Tryouts'; // Will be populated from Settings
+let TRYOUT_NAME = 'MGA Volleyball Tryouts';
+let NORTH_DATES = []; // Will be populated from Settings
+let SOUTH_DATES = []; // Will be populated from Settings
 let settingsLoaded = false;
 
 // Initialize players page when DOM loads
@@ -65,11 +66,16 @@ async function initializePage() {
     } catch (error) {
         console.error('Error initializing page:', error);
         // Use fallback settings if loading fails
-        TRYOUT_DATES = ['1/20', '1/22', '1/24'];
+        NORTH_DATES = [
+            { description: 'Tryout', date: '1/20' },
+            { description: 'Callback', date: '1/22' },
+            { description: 'Makeup', date: '1/24' }
+        ];
+        SOUTH_DATES = [...NORTH_DATES]; // Same fallback for both
         TRYOUT_NAME = 'MGA Volleyball Tryouts';
         settingsLoaded = true;
         
-        // Continue with initialization even if settings failed
+        // Continue with initialization
         const urlParams = new URLSearchParams(window.location.search);
         currentLocation = urlParams.get('location');
         currentAge = urlParams.get('age');
@@ -87,12 +93,14 @@ async function loadSettings() {
         const settings = await window.mgaAPI.getSettings();
         console.log('[MGA Debug] Loaded settings:', settings);
         
-        // Update global variables
+        // Update global variables with your existing structure
         TRYOUT_NAME = settings.tryoutName || 'MGA Volleyball Tryouts';
-        TRYOUT_DATES = settings.tryoutDates.map(dateInfo => dateInfo.date);
+        NORTH_DATES = settings.northDates || [];
+        SOUTH_DATES = settings.southDates || [];
         
         console.log('[MGA Debug] Tryout Name:', TRYOUT_NAME);
-        console.log('[MGA Debug] Tryout Dates:', TRYOUT_DATES);
+        console.log('[MGA Debug] North Dates:', NORTH_DATES);
+        console.log('[MGA Debug] South Dates:', SOUTH_DATES);
         
         settingsLoaded = true;
         
@@ -103,16 +111,36 @@ async function loadSettings() {
         console.error('Error loading settings:', error);
         // Use fallback values
         TRYOUT_NAME = 'MGA Volleyball Tryouts';
-        TRYOUT_DATES = ['1/20', '1/22', '1/24'];
+        NORTH_DATES = [
+            { description: 'Tryout', date: '1/20' },
+            { description: 'Callback', date: '1/22' },
+            { description: 'Makeup', date: '1/24' }
+        ];
+        SOUTH_DATES = [...NORTH_DATES];
         settingsLoaded = true;
     }
+}
+
+// Get the current location's tryout dates
+function getCurrentLocationDates() {
+    if (currentLocation === 'NORTH') {
+        return NORTH_DATES;
+    } else if (currentLocation === 'SOUTH') {
+        return SOUTH_DATES;
+    } else {
+        return []; // No location selected
+    }
+}
+
+// Get just the date strings for the current location
+function getCurrentLocationDateStrings() {
+    return getCurrentLocationDates().map(dateInfo => dateInfo.date);
 }
 
 // Update the header title with dynamic tryout name
 function updateHeaderTitle() {
     const headerTitle = document.querySelector('.header-center h1');
     if (headerTitle && settingsLoaded) {
-        // Keep the 📷 emoji and location/age info, but use dynamic name as base
         if (currentLocation && currentAge) {
             const locationName = currentLocation === 'NORTH' ? 'North' : 'South';
             headerTitle.textContent = `📷 ${TRYOUT_NAME} - ${locationName} ${currentAge}`;
@@ -226,6 +254,7 @@ function switchToTab(location, age) {
     window.history.pushState({}, '', newUrl);
     
     updatePageTitle();
+    updateHeaderTitle(); // Update header when location changes
     loadPlayers();
     loadAvailableTabs();
 }
@@ -302,13 +331,13 @@ function displayPlayers(data) {
     updateSortButtons();
 }
 
-// Generate player card with multi-day check-ins (using dynamic dates)
+// Generate player card with location-specific multi-day check-ins
 function generatePlayerCard(player) {
     const hasPhoto = player.hasSelfie && player.selfieUrl;
     const todayDate = getCurrentDateString();
     const isCheckedInToday = player.checkinDates && player.checkinDates[todayDate];
     
-    // Calculate completion status using dynamic dates
+    // Calculate completion status using location-specific dates
     const completionStatus = getCompletionStatus(player);
     
     const playerJson = JSON.stringify(player).replace(/"/g, '&quot;');
@@ -332,7 +361,7 @@ function generatePlayerCard(player) {
                     ${player.hand ? `<div class="player-hand">${escapeHtml(player.hand)}</div>` : ''}
                 </div>
                 
-                <!-- Multi-Day Check-in Timeline using dynamic dates -->
+                <!-- Location-Specific Multi-Day Check-in Timeline -->
                 <div class="checkin-timeline">
                     ${renderCheckinChips(player, todayDate)}
                 </div>
@@ -395,15 +424,19 @@ function generatePlayerCard(player) {
     `;
 }
 
-// Render check-in chips for each tryout date (using dynamic dates)
+// Render check-in chips for current location's dates
 function renderCheckinChips(player, todayDate) {
-    return TRYOUT_DATES.map(date => {
+    const locationDates = getCurrentLocationDateStrings();
+    const locationDateInfos = getCurrentLocationDates();
+    
+    return locationDates.map((date, index) => {
+        const dateInfo = locationDateInfos[index];
         const isDateToday = date === todayDate;
         const isCheckedIn = player.checkinDates && player.checkinDates[date];
         const isPast = isPastDate(date);
         
         let chipClass = 'checkin-chip';
-        let chipText = date;
+        let chipText = `${dateInfo.description} ${date}`;
         
         if (isCheckedIn) {
             chipClass += ' completed';
@@ -418,26 +451,28 @@ function renderCheckinChips(player, todayDate) {
             chipClass += ' upcoming';
         }
         
-        return `<span class="${chipClass}" title="${getChipTooltip(date, isCheckedIn, isDateToday, isPast)}">${chipText}</span>`;
+        return `<span class="${chipClass}" title="${getChipTooltip(dateInfo, isCheckedIn, isDateToday, isPast)}">${chipText}</span>`;
     }).join('');
 }
 
 // Get tooltip text for chips
-function getChipTooltip(date, isCheckedIn, isToday, isPast) {
-    if (isCheckedIn) return `Checked in on ${date}`;
-    if (isToday) return `Today - ${date}`;
-    if (isPast) return `Missed ${date}`;
-    return `Upcoming - ${date}`;
+function getChipTooltip(dateInfo, isCheckedIn, isToday, isPast) {
+    const label = `${dateInfo.description} (${dateInfo.date})`;
+    if (isCheckedIn) return `Checked in for ${label}`;
+    if (isToday) return `Today - ${label}`;
+    if (isPast) return `Missed ${label}`;
+    return `Upcoming - ${label}`;
 }
 
-// Get completion status for player (using dynamic dates)
+// Get completion status for player using location-specific dates
 function getCompletionStatus(player) {
-    const completed = TRYOUT_DATES.filter(date => 
+    const locationDates = getCurrentLocationDateStrings();
+    const completed = locationDates.filter(date => 
         player.checkinDates && player.checkinDates[date]
     ).length;
     
-    const total = TRYOUT_DATES.length;
-    const percentage = Math.round((completed / total) * 100);
+    const total = locationDates.length;
+    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
     
     let cssClass = 'none';
     if (percentage === 100) cssClass = 'complete';
@@ -476,9 +511,7 @@ async function checkInPlayerForDate(playerID, date, player) {
     }
 }
 
-// [Continue with all the camera functions and other existing code...]
-
-// Update session stats (using dynamic dates)
+// Update session stats using location-specific dates
 function updateSessionStats(data) {
     const statsElement = document.getElementById('session-stats');
     if (statsElement && data && settingsLoaded) {
@@ -491,7 +524,8 @@ function updateSessionStats(data) {
     }
 }
 
-// [Include all your existing camera functions and other code here...]
+// [Include all existing camera functions and other code...]
+// [Keep all your existing functions like escapeHtml, sortPlayers, camera functions, etc.]
 
 // Escape HTML
 function escapeHtml(text) {
@@ -521,6 +555,8 @@ function updateSortButtons() {
     
     document.getElementById(`sort-${currentSort}`)?.classList.add('active');
 }
+
+// [All your existing camera functions go here - I'll include them to keep this complete]
 
 // Camera Modal Functions
 function openCameraModal(player) {
