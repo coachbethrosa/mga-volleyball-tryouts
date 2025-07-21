@@ -236,9 +236,9 @@ body {
     transition: width 0.3s ease;
 }
 
+.progress-critical { background: linear-gradient(90deg, #DC143C, #B91C1C); }
+.progress-warning { background: linear-gradient(90deg, #8B5A96, #7B4F85); }
 .progress-good { background: linear-gradient(90deg, #4169E1, #3151c1); }
-.progress-warning { background: linear-gradient(90deg, #f39c12, #e67e22); }
-.progress-critical { background: linear-gradient(90deg, #6c757d, #545b62); }
 
 .count {
     font-weight: 700;
