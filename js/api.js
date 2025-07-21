@@ -56,7 +56,7 @@ function getConfig() {
 
     return {
         async getDashboardData() {
-            const data = await makeJSONPRequest('getDashboardData');
+            const data = await makeJSONPRequest('getDashboard');
             return data;
         },
 
