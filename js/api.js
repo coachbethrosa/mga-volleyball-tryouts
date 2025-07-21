@@ -61,13 +61,13 @@ function getConfig() {
         },
 
         async getPlayers(location, age, sort) {
-            const data = await makeJSONPRequest('getPlayers', {
-                location: location,
-                age: age,
-                sort: sort
-            });
-            return data;
-        },
+    const response = await makeJSONPRequest('getPlayers', {
+        location: location,
+        age: age,
+        sort: sort
+    });
+    return response.data;  // ✅ Returns just the data part {totalPlayers: 1, players: [...]}
+},
 
         async getAvailableTabs() {
             const data = await makeJSONPRequest('getAvailableTabs');
