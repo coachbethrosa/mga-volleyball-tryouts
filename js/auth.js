@@ -104,11 +104,8 @@ class AuthManager {
     }
 }
 
-// Initialize auth manager on page load
-let authManager;
-document.addEventListener('DOMContentLoaded', () => {
-    authManager = new AuthManager();
-});
+// Initialize auth manager immediately when script loads
+let authManager = new AuthManager();
 
 // Add logout function to window for easy access
 window.logout = () => authManager.logout();
