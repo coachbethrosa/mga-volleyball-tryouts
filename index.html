@@ -12,24 +12,24 @@
 </head>
 <body>
     <div class="header">
-        <div class="header-left">
-            <img src="https://mgavolleyball.com/wp-content/uploads/2023/07/mga-logo-277x300.png" 
-                 alt="MGA Volleyball Logo" 
-                 class="logo">
-            <div class="header-text">
-                <h1>MGA Volleyball Tryouts</h1>
-                <div class="subtitle">Live Check-in Status</div>
-            </div>
-        </div>
-        
-        <div class="header-right">
-            <a href="players.html" class="view-players-btn" id="view-players-link">
-                📷 View Players
-            </a>
-            <!-- ADD THIS LINE: -->
-            <button class="logout-btn" onclick="logout()" style="margin-top: 8px;">Logout</button>
-        </div>
+    <div class="header-left">
+        <img src="https://mgavolleyball.com/wp-content/uploads/2023/07/mga-logo-277x300.png" 
+             alt="MGA Volleyball Logo" 
+             class="logo">
     </div>
+    
+    <div class="header-center">
+        <h1>MGA Volleyball Tryouts</h1>
+        <div class="subtitle">Live Check-in Status</div>
+    </div>
+    
+    <div class="header-right">
+        <a href="players.html" class="view-players-btn" id="view-players-link">
+            📷 View Players
+        </a>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+</div>
     
     <a href="#" class="refresh-info" onclick="refreshDashboard(); return false;">
         Updates automatically every 60 seconds
