@@ -103,7 +103,7 @@ async function loadSettings() {
             d.description.toLowerCase().includes('south')
         );
         
-        // Update global variables
+        // Update global variables with your existing structure
         TRYOUT_NAME = settings.tryoutName || 'MGA Volleyball Tryouts';
         NORTH_DATES = northDates;
         SOUTH_DATES = southDates;
@@ -117,12 +117,24 @@ async function loadSettings() {
         console.log('[MGA Debug] South Dates:', SOUTH_DATES);
         
         settingsLoaded = true;
+        
+        // Update the page header with the dynamic name
         updateHeaderTitle();
         
     } catch (error) {
-        // ... your existing error handling
+        console.error('Error loading settings:', error);
+        // Use fallback values
+        TRYOUT_NAME = 'MGA Volleyball Tryouts';
+        NORTH_DATES = [
+            { description: 'Tryout', date: '1/20' },
+            { description: 'Callback', date: '1/22' },
+            { description: 'Makeup', date: '1/24' }
+        ];
+        SOUTH_DATES = [...NORTH_DATES];
+        settingsLoaded = true;
     }
 }
+
 // Get the current location's tryout dates
 function getCurrentLocationDates() {
     if (currentLocation === 'NORTH') {
