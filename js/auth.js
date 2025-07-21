@@ -105,7 +105,7 @@ class AuthManager {
 }
 
 // Initialize auth manager immediately when script loads
-let authManager = new AuthManager();
+window.authManager = new AuthManager();
 
 // Add logout function to window for easy access
 window.logout = () => authManager.logout();
