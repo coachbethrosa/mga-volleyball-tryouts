@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
             dashboardRefreshInterval = setInterval(() => {
                 // if (authManager && authManager.isLoggedIn()) {
                     loadDashboardData();
-                }
+                // }
             }, window.CONFIG.dashboardRefreshInterval);
         }
 //    });
