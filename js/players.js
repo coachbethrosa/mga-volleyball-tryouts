@@ -105,8 +105,8 @@ async function loadSettings() {
         
         // Update global variables with your existing structure
         TRYOUT_NAME = settings.tryoutName || 'MGA Volleyball Tryouts';
-        NORTH_DATES = northDates;
-        SOUTH_DATES = southDates;
+        NORTH_DATES = northDates;  // ✅ Use the processed arrays
+        SOUTH_DATES = southDates;  // ✅ Use the processed arrays
         
         // Also store in window.settings for chips
         window.settings.northDates = northDates;
