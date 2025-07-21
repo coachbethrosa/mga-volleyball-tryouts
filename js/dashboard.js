@@ -15,12 +15,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Set up auto-refresh
         if (window.CONFIG?.dashboardRefreshInterval) {
             dashboardRefreshInterval = setInterval(() => {
-                // if (authManager && authManager.isLoggedIn()) {
+                 if (authManager && authManager.isLoggedIn()) {
                     loadDashboardData();
-                // }
+                 }
             }, window.CONFIG.dashboardRefreshInterval);
         }
-//    });
+    });
 });
 
 // Wait for authentication
