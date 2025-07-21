@@ -75,8 +75,11 @@ async function waitForAuth() {
 
 // Load available tabs/sessions
 async function loadAvailableTabs() {
+    console.log('[MGA Debug] loadAvailableTabs() called'); // ADD THIS
     try {
+        console.log('[MGA Debug] Calling mgaAPI.getAvailableTabs()'); // ADD THIS
         const tabs = await window.mgaAPI.getAvailableTabs();
+        console.log('[MGA Debug] Got tabs:', tabs); // ADD THIS
         displayNavigationTabs(tabs);
     } catch (error) {
         console.error('Error loading tabs:', error);
