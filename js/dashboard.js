@@ -7,19 +7,19 @@ document.addEventListener('DOMContentLoaded', function() {
     window.debugLog('Dashboard initializing...');
     
     // Wait for auth before loading data
-    waitForAuth().then(() => {
+    // waitForAuth().then(() => {
         loadDashboardData();
         loadFirstActiveSession();
         
         // Set up auto-refresh
         if (window.CONFIG?.dashboardRefreshInterval) {
             dashboardRefreshInterval = setInterval(() => {
-                if (authManager && authManager.isLoggedIn()) {
+                // if (authManager && authManager.isLoggedIn()) {
                     loadDashboardData();
                 }
             }, window.CONFIG.dashboardRefreshInterval);
         }
-    });
+//    });
 });
 
 // Wait for authentication
