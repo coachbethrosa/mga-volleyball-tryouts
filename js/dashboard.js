@@ -47,15 +47,20 @@ async function waitForAuth() {
 
 // Load main dashboard statistics
 async function loadDashboardData() {
+    console.log('[MGA Debug] loadDashboardData() called'); // ADD THIS
     try {
         window.debugLog('Loading dashboard data...');
+        console.log('[MGA Debug] About to call mgaAPI.getDashboardData()'); // ADD THIS
         const data = await window.mgaAPI.getDashboardData();
+        console.log('[MGA Debug] Dashboard API response:', data); // ADD THIS
         
         if (data && data.totals) {
+            console.log('[MGA Debug] Data has totals, displaying stats'); // ADD THIS
             displayDashboardStats(data);
             displayLocationSections(data.byLocation);
             updateLastUpdated();
         } else {
+            console.log('[MGA Debug] Data missing totals:', data); // ADD THIS
             throw new Error('Invalid dashboard data received');
         }
         
@@ -85,15 +90,14 @@ async function loadFirstActiveSession() {
 
 // Display dashboard statistics (your original design)
 function displayDashboardStats(data) {
+    console.log('[MGA Debug] displayDashboardStats called with:', data); // ADD THIS
     const totals = data.totals;
+    console.log('[MGA Debug] Totals object:', totals); // ADD THIS
     
     // Update stat cards
     document.getElementById('total-expected').textContent = totals.expected;
     document.getElementById('checked-in-count').textContent = totals.checkedIn;
-    document.getElementById('checkin-percentage').textContent = totals.checkinPercent + '%';
-    document.getElementById('selfies-count').textContent = totals.selfies;
-    document.getElementById('selfie-percentage').textContent = totals.selfiePercent + '%';
-    document.getElementById('missing-count').textContent = totals.missing;
+    // ... rest of function
 }
 
 // Display location sections (your original design)
