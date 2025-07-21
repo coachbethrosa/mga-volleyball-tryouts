@@ -14,19 +14,23 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Wait for auth before loading data
     waitForAuth().then(() => {
-        // Get parameters from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        currentLocation = urlParams.get('location');
-        currentAge = urlParams.get('age');
-        currentSort = urlParams.get('sort') || 'name';
-        
-        window.debugLog('URL params:', { currentLocation, currentAge, currentSort });
-        
-        // Update page title
-        updatePageTitle();
-        
-        // Load initial data
-        loadAvailableTabs();
+    console.log('[MGA Debug] Auth wait completed, proceeding with initialization'); // ADD THIS
+    
+    // Get parameters from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    currentLocation = urlParams.get('location');
+    currentAge = urlParams.get('age');
+    currentSort = urlParams.get('sort') || 'name';
+    
+    window.debugLog('URL params:', { currentLocation, currentAge, currentSort });
+    
+    // Update page title
+    updatePageTitle();
+    
+    // Load initial data
+    console.log('[MGA Debug] About to load available tabs'); // ADD THIS
+    loadAvailableTabs();
+
         
         if (currentLocation && currentAge) {
             loadPlayers();
