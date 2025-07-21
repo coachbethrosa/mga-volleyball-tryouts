@@ -81,6 +81,17 @@ async function loadAvailableTabs() {
         const tabs = await window.mgaAPI.getAvailableTabs();
         console.log('[MGA Debug] Got tabs:', tabs); // ADD THIS
         displayNavigationTabs(tabs);
+
+        if ((!currentLocation || !currentAge) && tabs.length > 0) {
+            console.log('[MGA Debug] Auto-selecting first tab:', tabs[0]);
+            currentLocation = tabs[0].location;
+            currentAge = tabs[0].age;
+            updatePageTitle();
+            loadPlayers();
+            // Update the URL
+            const newUrl = `${window.location.pathname}?location=${encodeURIComponent(currentLocation)}&age=${encodeURIComponent(currentAge)}&sort=${currentSort}`;
+            window.history.pushState({}, '', newUrl);
+        }
     } catch (error) {
         console.error('Error loading tabs:', error);
         document.getElementById('navigation-tabs').innerHTML = 
