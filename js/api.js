@@ -1,6 +1,9 @@
 // Enhanced API with Settings Support - Works with your existing structure
 window.mgaAPI = (function() {
-    const config = window.CONFIG;
+    // Get config when needed, not immediately
+function getConfig() {
+    return window.CONFIG || {};
+}
     
     function makeJSONPRequest(action, params = {}) {
         return new Promise((resolve, reject) => {
@@ -14,7 +17,7 @@ window.mgaAPI = (function() {
                 ...params
             });
             
-            script.src = `${config.API_BASE_URL}?${queryParams}`;
+            script.src = `${getConfig().API_BASE_URL}?${queryParams}`;
             
             // Set up callback
             window[callbackName] = function(data) {
