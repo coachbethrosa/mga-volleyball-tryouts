@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.debugLog('Players page initializing...');
     
     // Wait for auth before loading data
-    waitForAuth().then(() => {
+    // waitForAuth().then(() => {
     console.log('[MGA Debug] Auth wait completed, proceeding with initialization'); // ADD THIS
     
     // Get parameters from URL
@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Set up camera modal controls
         setupCameraControls();
-    });
+    //});
 });
 
 // Wait for authentication
