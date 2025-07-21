@@ -92,35 +92,37 @@ async function loadSettings() {
     try {
         const settings = await window.mgaAPI.getSettings();
         console.log('[MGA Debug] Loaded settings:', settings);
+        
         window.settings = settings;
-        // Update global variables with your existing structure
+        
+        // PROCESS THE RAW DATES INTO NORTH/SOUTH ARRAYS
+        const northDates = settings.tryoutDates.filter(d => 
+            d.description.toLowerCase().includes('north')
+        );
+        const southDates = settings.tryoutDates.filter(d => 
+            d.description.toLowerCase().includes('south')
+        );
+        
+        // Update global variables
         TRYOUT_NAME = settings.tryoutName || 'MGA Volleyball Tryouts';
-        NORTH_DATES = settings.northDates || [];
-        SOUTH_DATES = settings.southDates || [];
+        NORTH_DATES = northDates;
+        SOUTH_DATES = southDates;
+        
+        // Also store in window.settings for chips
+        window.settings.northDates = northDates;
+        window.settings.southDates = southDates;
         
         console.log('[MGA Debug] Tryout Name:', TRYOUT_NAME);
         console.log('[MGA Debug] North Dates:', NORTH_DATES);
         console.log('[MGA Debug] South Dates:', SOUTH_DATES);
         
         settingsLoaded = true;
-        
-        // Update the page header with the dynamic name
         updateHeaderTitle();
         
     } catch (error) {
-        console.error('Error loading settings:', error);
-        // Use fallback values
-        TRYOUT_NAME = 'MGA Volleyball Tryouts';
-        NORTH_DATES = [
-            { description: 'Tryout', date: '1/20' },
-            { description: 'Callback', date: '1/22' },
-            { description: 'Makeup', date: '1/24' }
-        ];
-        SOUTH_DATES = [...NORTH_DATES];
-        settingsLoaded = true;
+        // ... your existing error handling
     }
 }
-
 // Get the current location's tryout dates
 function getCurrentLocationDates() {
     if (currentLocation === 'NORTH') {
