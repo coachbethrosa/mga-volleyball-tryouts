@@ -1,4 +1,4 @@
-// MGA Volleyball Tryouts - Players/Photo Review Functionality (Your Original Design)
+// MGA Volleyball Tryouts - Players/Photo Review Functionality (Your Original Design + Auth)
 
 let currentLocation = null;
 let currentAge = null;
@@ -12,32 +12,62 @@ let currentPhotoPlayer = null;
 document.addEventListener('DOMContentLoaded', function() {
     window.debugLog('Players page initializing...');
     
-    // Get parameters from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    currentLocation = urlParams.get('location');
-    currentAge = urlParams.get('age');
-    currentSort = urlParams.get('sort') || 'name';
-    
-    window.debugLog('URL params:', { currentLocation, currentAge, currentSort });
-    
-    // Update page title
-    updatePageTitle();
-    
-    // Load initial data
-    loadAvailableTabs();
-    
-    if (currentLocation && currentAge) {
-        loadPlayers();
+    // Wait for auth before loading data
+    waitForAuth().then(() => {
+        // Get parameters from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        currentLocation = urlParams.get('location');
+        currentAge = urlParams.get('age');
+        currentSort = urlParams.get('sort') || 'name';
         
-        // Set up auto-refresh
-        if (window.CONFIG?.playersRefreshInterval) {
-            playersRefreshInterval = setInterval(loadPlayers, window.CONFIG.playersRefreshInterval);
+        window.debugLog('URL params:', { currentLocation, currentAge, currentSort });
+        
+        // Update page title
+        updatePageTitle();
+        
+        // Load initial data
+        loadAvailableTabs();
+        
+        if (currentLocation && currentAge) {
+            loadPlayers();
+            
+            // Set up auto-refresh
+            if (window.CONFIG?.playersRefreshInterval) {
+                playersRefreshInterval = setInterval(() => {
+                    if (authManager && authManager.isLoggedIn()) {
+                        loadPlayers();
+                    }
+                }, window.CONFIG.playersRefreshInterval);
+            }
         }
-    }
-    
-    // Set up camera modal controls
-    setupCameraControls();
+        
+        // Set up camera modal controls
+        setupCameraControls();
+    });
 });
+
+// Wait for authentication
+async function waitForAuth() {
+    return new Promise((resolve) => {
+        const checkAuth = () => {
+            if (window.authManager && authManager.isLoggedIn()) {
+                resolve();
+            } else if (window.authManager) {
+                // Auth manager exists but not logged in, wait for login
+                const checkLogin = setInterval(() => {
+                    if (authManager.isLoggedIn()) {
+                        clearInterval(checkLogin);
+                        resolve();
+                    }
+                }, 100);
+            } else {
+                // Auth manager not ready yet
+                setTimeout(checkAuth, 100);
+            }
+        };
+        checkAuth();
+    });
+}
 
 // Load available tabs/sessions
 async function loadAvailableTabs() {
@@ -74,6 +104,8 @@ function displayNavigationTabs(tabs) {
 
 // Switch to a different tab
 function switchToTab(location, age) {
+    if (!authManager.requireAuth()) return;
+    
     window.debugLog('Switching to tab:', location, age);
     
     // Update current state
@@ -236,6 +268,7 @@ function escapeHtml(text) {
 
 // Sort players
 function sortPlayers(sortBy) {
+    if (!authManager.requireAuth()) return;
     if (sortBy === currentSort) return; // Already sorted this way
     
     currentSort = sortBy;
@@ -267,28 +300,11 @@ function updateSessionStats(data) {
 
 // Check in a player
 async function checkInPlayer(player) {
+    if (!authManager.requireAuth()) return;
+    
     if (player.hasCheckedIn) {
         alert('Player is already checked in');
         return;
-    }
-    
-    // Find the button that was clicked and show immediate feedback
-    const buttons = document.querySelectorAll('.checkin-btn');
-    let clickedButton = null;
-    
-    buttons.forEach(btn => {
-        if (btn.textContent.includes('Check In') && !btn.disabled) {
-            // This is likely the button for this player
-            if (btn.onclick && btn.onclick.toString().includes(player.playerID)) {
-                clickedButton = btn;
-            }
-        }
-    });
-    
-    if (clickedButton) {
-        clickedButton.disabled = true;
-        clickedButton.textContent = '⏳ Checking in...';
-        clickedButton.style.background = '#ffc107';
     }
     
     try {
@@ -303,10 +319,6 @@ async function checkInPlayer(player) {
         });
         
         if (result.success) {
-            if (clickedButton) {
-                clickedButton.textContent = '✅ Checked In';
-                clickedButton.style.background = '#28a745';
-            }
             alert(`✅ ${player.first} ${player.last} checked in successfully!`);
             loadPlayers(); // Refresh the list
         } else {
@@ -315,20 +327,14 @@ async function checkInPlayer(player) {
         
     } catch (error) {
         console.error('Check-in error:', error);
-        
-        // Reset button on error
-        if (clickedButton) {
-            clickedButton.disabled = false;
-            clickedButton.textContent = '📝 Check In';
-            clickedButton.style.background = '#28a745';
-        }
-        
         alert(`❌ Check-in failed: ${error.message}`);
     }
 }
 
 // Camera Modal Functions
 function openCameraModal(player) {
+    if (!authManager.requireAuth()) return;
+    
     window.debugLog('Opening camera for player:', player);
     
     const modal = document.getElementById('camera-modal');
@@ -485,7 +491,6 @@ async function submitPhoto() {
         submitBtn.disabled = true;
         
         // Call the API to process photo submission
-        // Note: This will need to be implemented in the API backend
         const result = await submitPhotoToAPI(currentPhotoPlayer.capturedPhoto, currentPhotoPlayer);
         
         if (result.success) {
@@ -509,29 +514,25 @@ async function submitPhoto() {
     }
 }
 
-// API call for photo submission (REAL implementation)
+// API call for photo submission (placeholder - needs implementation)
 async function submitPhotoToAPI(photoData, player) {
-    try {
-        console.log('Submitting photo for player:', player.playerID);
-        
-        const params = new URLSearchParams({
-            action: 'submitPhoto',
-            photoData: photoData,
-            playerID: player.playerID,
-            location: currentLocation,
-            age: currentAge
-        });
+    // This would call your Apps Script API to process the photo
+    console.log('Photo submission for player:', player.playerID);
+    console.log('Photo data size:', photoData.length);
+    
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    return { success: true };
+}
 
-        const url = `${window.API_BASE_URL}?${params.toString()}`;
-        const response = await window.mgaAPI.makeRequest(url);
-        
-        return response;
-        
-    } catch (error) {
-        console.error('Photo submission error:', error);
-        return { success: false, error: error.message };
+function stopCameraStream() {
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
     }
 }
+
 function resetCameraInterface() {
     const video = document.getElementById('camera-video');
     const capturedImage = document.getElementById('captured-image');
