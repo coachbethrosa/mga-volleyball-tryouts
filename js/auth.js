@@ -1,7 +1,7 @@
 // MGA Volleyball Tryouts - Authentication System
 class AuthManager {
     constructor() {
-        this.STAFF_PASSWORD = 'mga2025'; // Change this to your preferred password
+        this.STAFF_PASSWORD = 'MGA4ever'; // Change this to your preferred password
         this.SESSION_KEY = 'mga_volleyball_staff_auth';
         this.init();
     }
