@@ -588,7 +588,8 @@ function resetCameraInterface() {
     const submitBtn = document.getElementById('submit-photo-btn');
     if (submitBtn) submitBtn.disabled = false;
 }
-
+});
+});
 // Clean up on page unload
 window.addEventListener('beforeunload', function() {
     if (playersRefreshInterval) {
