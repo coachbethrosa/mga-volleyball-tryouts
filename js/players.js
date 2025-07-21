@@ -14,23 +14,22 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Wait for auth before loading data
     waitForAuth().then(() => {
-    console.log('[MGA Debug] Auth wait completed, proceeding with initialization'); // ADD THIS
-    
-    // Get parameters from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    currentLocation = urlParams.get('location');
-    currentAge = urlParams.get('age');
-    currentSort = urlParams.get('sort') || 'name';
-    
-    window.debugLog('URL params:', { currentLocation, currentAge, currentSort });
-    
-    // Update page title
-    updatePageTitle();
-    
-    // Load initial data
-    console.log('[MGA Debug] About to load available tabs'); // ADD THIS
-    loadAvailableTabs();
-
+        console.log('[MGA Debug] Auth wait completed, proceeding with initialization');
+        
+        // Get parameters from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        currentLocation = urlParams.get('location');
+        currentAge = urlParams.get('age');
+        currentSort = urlParams.get('sort') || 'name';
+        
+        window.debugLog('URL params:', { currentLocation, currentAge, currentSort });
+        
+        // Update page title
+        updatePageTitle();
+        
+        // Load initial data
+        console.log('[MGA Debug] About to load available tabs');
+        loadAvailableTabs();
         
         if (currentLocation && currentAge) {
             loadPlayers();
@@ -47,10 +46,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Set up camera modal controls
         setupCameraControls();
-    });
-});
+    }); // Closes waitForAuth().then()
+}); // Closes document.addEventListener()
 
-// Wait for authentication
 // Wait for authentication - FIXED VERSION
 async function waitForAuth() {
     return new Promise((resolve) => {
@@ -76,11 +74,11 @@ async function waitForAuth() {
 
 // Load available tabs/sessions
 async function loadAvailableTabs() {
-    console.log('[MGA Debug] loadAvailableTabs() called'); // ADD THIS
+    console.log('[MGA Debug] loadAvailableTabs() called');
     try {
-        console.log('[MGA Debug] Calling mgaAPI.getAvailableTabs()'); // ADD THIS
+        console.log('[MGA Debug] Calling mgaAPI.getAvailableTabs()');
         const tabs = await window.mgaAPI.getAvailableTabs();
-        console.log('[MGA Debug] Got tabs:', tabs); // ADD THIS
+        console.log('[MGA Debug] Got tabs:', tabs);
         displayNavigationTabs(tabs);
 
         if ((!currentLocation || !currentAge) && tabs.length > 0) {
@@ -102,21 +100,21 @@ async function loadAvailableTabs() {
 
 // Display navigation tabs (your original design)
 function displayNavigationTabs(tabs) {
-    console.log('[MGA Debug] displayNavigationTabs called with:', tabs); // ADD THIS
+    console.log('[MGA Debug] displayNavigationTabs called with:', tabs);
     if (!Array.isArray(tabs) || tabs.length === 0) {
-        console.log('[MGA Debug] No tabs or empty array'); // ADD THIS
+        console.log('[MGA Debug] No tabs or empty array');
         document.getElementById('navigation-tabs').innerHTML = 
             '<span style="color: #666; padding: 10px;">No player data available</span>';
         return;
     }
     
-    console.log('[MGA Debug] Processing', tabs.length, 'tabs'); // ADD THIS
+    console.log('[MGA Debug] Processing', tabs.length, 'tabs');
     
     const tabsHtml = tabs.map(tab => {
         const isActive = tab.location === currentLocation && tab.age === currentAge;
         const activeClass = isActive ? 'active' : '';
         
-        console.log('[MGA Debug] Processing tab:', tab); // ADD THIS
+        console.log('[MGA Debug] Processing tab:', tab);
         
         return `<a href="#" class="nav-tab ${activeClass}" 
                    onclick="switchToTab('${tab.location}', '${tab.age}'); return false;">
@@ -124,10 +122,10 @@ function displayNavigationTabs(tabs) {
                 </a>`;
     }).join('');
     
-    console.log('[MGA Debug] Generated HTML:', tabsHtml); // ADD THIS
+    console.log('[MGA Debug] Generated HTML:', tabsHtml);
     
     document.getElementById('navigation-tabs').innerHTML = tabsHtml;
-    console.log('[MGA Debug] Set innerHTML complete'); // ADD THIS
+    console.log('[MGA Debug] Set innerHTML complete');
 }
 
 // Switch to a different tab
@@ -589,7 +587,6 @@ function resetCameraInterface() {
     if (submitBtn) submitBtn.disabled = false;
 }
 
-});
 // Clean up on page unload
 window.addEventListener('beforeunload', function() {
     if (playersRefreshInterval) {
