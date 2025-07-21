@@ -17,7 +17,7 @@ function getConfig() {
                 ...params
             });
             
-            script.src = `${getConfig().API_BASE_URL}?${queryParams}`;
+            script.src = `${window.API_BASE_URL}?${queryParams}`;
             
             // Set up callback
             window[callbackName] = function(data) {
