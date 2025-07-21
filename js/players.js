@@ -90,15 +90,21 @@ async function loadAvailableTabs() {
 
 // Display navigation tabs (your original design)
 function displayNavigationTabs(tabs) {
+    console.log('[MGA Debug] displayNavigationTabs called with:', tabs); // ADD THIS
     if (!Array.isArray(tabs) || tabs.length === 0) {
+        console.log('[MGA Debug] No tabs or empty array'); // ADD THIS
         document.getElementById('navigation-tabs').innerHTML = 
             '<span style="color: #666; padding: 10px;">No player data available</span>';
         return;
     }
     
+    console.log('[MGA Debug] Processing', tabs.length, 'tabs'); // ADD THIS
+    
     const tabsHtml = tabs.map(tab => {
         const isActive = tab.location === currentLocation && tab.age === currentAge;
         const activeClass = isActive ? 'active' : '';
+        
+        console.log('[MGA Debug] Processing tab:', tab); // ADD THIS
         
         return `<a href="#" class="nav-tab ${activeClass}" 
                    onclick="switchToTab('${tab.location}', '${tab.age}'); return false;">
@@ -106,7 +112,10 @@ function displayNavigationTabs(tabs) {
                 </a>`;
     }).join('');
     
+    console.log('[MGA Debug] Generated HTML:', tabsHtml); // ADD THIS
+    
     document.getElementById('navigation-tabs').innerHTML = tabsHtml;
+    console.log('[MGA Debug] Set innerHTML complete'); // ADD THIS
 }
 
 // Switch to a different tab
