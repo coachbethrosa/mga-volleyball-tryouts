@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.debugLog('Players page initializing...');
     
     // Wait for auth before loading data
-    // waitForAuth().then(() => {
+    waitForAuth().then(() => {
     console.log('[MGA Debug] Auth wait completed, proceeding with initialization'); // ADD THIS
     
     // Get parameters from URL
@@ -51,21 +51,22 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Wait for authentication
+// Wait for authentication - FIXED VERSION
 async function waitForAuth() {
     return new Promise((resolve) => {
         const checkAuth = () => {
-            if (window.authManager && authManager.isLoggedIn()) {
-                resolve();
-            } else if (window.authManager) {
-                // Auth manager exists but not logged in, wait for login
-                const checkLogin = setInterval(() => {
-                    if (authManager.isLoggedIn()) {
-                        clearInterval(checkLogin);
-                        resolve();
-                    }
-                }, 100);
+            if (window.authManager) {
+                if (authManager.isLoggedIn()) {
+                    console.log('[MGA Debug] Auth check passed, proceeding');
+                    resolve();
+                } else {
+                    console.log('[MGA Debug] Auth manager exists but not logged in, waiting...');
+                    // Check again in 200ms
+                    setTimeout(checkAuth, 200);
+                }
             } else {
-                // Auth manager not ready yet
+                console.log('[MGA Debug] Auth manager not ready, waiting...');
+                // Check again in 100ms
                 setTimeout(checkAuth, 100);
             }
         };
