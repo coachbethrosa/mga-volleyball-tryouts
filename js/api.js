@@ -56,9 +56,9 @@ function getConfig() {
 
     return {
         async getDashboardData() {
-            const data = await makeJSONPRequest('getDashboard');
-            return data;
-        },
+    const response = await makeJSONPRequest('getDashboard');  // Fixed action name  
+    return response.data;  // ✅ Returns just the data part
+},
 
         async getPlayers(location, age, sort) {
     const response = await makeJSONPRequest('getPlayers', {
