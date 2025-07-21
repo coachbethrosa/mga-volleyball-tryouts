@@ -92,7 +92,7 @@ async function loadSettings() {
     try {
         const settings = await window.mgaAPI.getSettings();
         console.log('[MGA Debug] Loaded settings:', settings);
-        
+        window.settings = settings;
         // Update global variables with your existing structure
         TRYOUT_NAME = settings.tryoutName || 'MGA Volleyball Tryouts';
         NORTH_DATES = settings.northDates || [];
