@@ -1,30 +1,77 @@
-// MGA Volleyball Tryouts - Dashboard Functionality (Your Original Design + Auth)
+// MGA Volleyball Tryouts - Dashboard with Dynamic Settings
 
 let dashboardRefreshInterval;
+let TRYOUT_NAME = 'MGA Volleyball Tryouts'; // Will be loaded from settings
 
 // Initialize dashboard when page loads
 document.addEventListener('DOMContentLoaded', function() {
     window.debugLog('Dashboard initializing...');
     
     // Wait for auth before loading data
-     waitForAuth().then(() => {
+    waitForAuth().then(() => {
         console.log('[MGA Debug] Dashboard auth complete, loading data');
+        initializeDashboard();
+    });
+});
+
+// Initialize dashboard with settings
+async function initializeDashboard() {
+    try {
+        // Load settings first
+        await loadSettings();
+        
+        // Then load dashboard data
         loadDashboardData();
         loadFirstActiveSession();
         
         // Set up auto-refresh
         if (window.CONFIG?.dashboardRefreshInterval) {
             dashboardRefreshInterval = setInterval(() => {
-                 if (authManager && authManager.isLoggedIn()) {
+                if (authManager && authManager.isLoggedIn()) {
                     loadDashboardData();
-                 }
+                }
             }, window.CONFIG.dashboardRefreshInterval);
         }
-    });
-});
+    } catch (error) {
+        console.error('Error initializing dashboard:', error);
+        // Continue with default settings if loading fails
+        loadDashboardData();
+        loadFirstActiveSession();
+    }
+}
+
+// Load settings and update page title
+async function loadSettings() {
+    try {
+        const settings = await window.mgaAPI.getSettings();
+        TRYOUT_NAME = settings.tryoutName || 'MGA Volleyball Tryouts';
+        
+        // Update the page header
+        updatePageTitle();
+        
+        console.log('[MGA Debug] Dashboard loaded tryout name:', TRYOUT_NAME);
+        
+    } catch (error) {
+        console.error('Error loading settings for dashboard:', error);
+        TRYOUT_NAME = 'MGA Volleyball Tryouts';
+    }
+}
+
+// Update page title with dynamic name
+function updatePageTitle() {
+    const titleElement = document.querySelector('.header-center h1');
+    const subtitleElement = document.querySelector('.header-center .subtitle');
+    
+    if (titleElement) {
+        titleElement.textContent = TRYOUT_NAME;
+    }
+    
+    if (subtitleElement) {
+        subtitleElement.textContent = 'Live Check-in Status';
+    }
+}
 
 // Wait for authentication
-// Wait for authentication - FIXED VERSION
 async function waitForAuth() {
     return new Promise((resolve) => {
         const checkAuth = () => {
@@ -34,12 +81,10 @@ async function waitForAuth() {
                     resolve();
                 } else {
                     console.log('[MGA Debug] Auth manager exists but not logged in, waiting...');
-                    // Check again in 200ms
                     setTimeout(checkAuth, 200);
                 }
             } else {
                 console.log('[MGA Debug] Auth manager not ready, waiting...');
-                // Check again in 100ms
                 setTimeout(checkAuth, 100);
             }
         };
@@ -49,20 +94,20 @@ async function waitForAuth() {
 
 // Load main dashboard statistics
 async function loadDashboardData() {
-    console.log('[MGA Debug] loadDashboardData() called'); // ADD THIS
+    console.log('[MGA Debug] loadDashboardData() called');
     try {
         window.debugLog('Loading dashboard data...');
-        console.log('[MGA Debug] About to call mgaAPI.getDashboardData()'); // ADD THIS
+        console.log('[MGA Debug] About to call mgaAPI.getDashboardData()');
         const data = await window.mgaAPI.getDashboardData();
-        console.log('[MGA Debug] Dashboard API response:', data); // ADD THIS
+        console.log('[MGA Debug] Dashboard API response:', data);
         
         if (data && data.totals) {
-            console.log('[MGA Debug] Data has totals, displaying stats'); // ADD THIS
+            console.log('[MGA Debug] Data has totals, displaying stats');
             displayDashboardStats(data);
             displayLocationSections(data.byLocation);
             updateLastUpdated();
         } else {
-            console.log('[MGA Debug] Data missing totals:', data); // ADD THIS
+            console.log('[MGA Debug] Data missing totals:', data);
             throw new Error('Invalid dashboard data received');
         }
         
@@ -92,14 +137,17 @@ async function loadFirstActiveSession() {
 
 // Display dashboard statistics (your original design)
 function displayDashboardStats(data) {
-    console.log('[MGA Debug] displayDashboardStats called with:', data); // ADD THIS
+    console.log('[MGA Debug] displayDashboardStats called with:', data);
     const totals = data.totals;
-    console.log('[MGA Debug] Totals object:', totals); // ADD THIS
+    console.log('[MGA Debug] Totals object:', totals);
     
     // Update stat cards
     document.getElementById('total-expected').textContent = totals.expected;
     document.getElementById('checked-in-count').textContent = totals.checkedIn;
-    // ... rest of function
+    document.getElementById('checkin-percentage').textContent = totals.checkinPercent + '%';
+    document.getElementById('selfies-count').textContent = totals.selfies;
+    document.getElementById('selfie-percentage').textContent = totals.selfiePercent + '%';
+    document.getElementById('missing-count').textContent = totals.missing;
 }
 
 // Display location sections (your original design)
