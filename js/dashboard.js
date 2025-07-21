@@ -1,4 +1,4 @@
-// MGA Volleyball Tryouts - Dashboard Functionality (Your Original Design)
+// MGA Volleyball Tryouts - Dashboard Functionality (Your Original Design + Auth)
 
 let dashboardRefreshInterval;
 
@@ -6,14 +6,44 @@ let dashboardRefreshInterval;
 document.addEventListener('DOMContentLoaded', function() {
     window.debugLog('Dashboard initializing...');
     
-    loadDashboardData();
-    loadFirstActiveSession();
-    
-    // Set up auto-refresh
-    if (window.CONFIG?.dashboardRefreshInterval) {
-        dashboardRefreshInterval = setInterval(loadDashboardData, window.CONFIG.dashboardRefreshInterval);
-    }
+    // Wait for auth before loading data
+    waitForAuth().then(() => {
+        loadDashboardData();
+        loadFirstActiveSession();
+        
+        // Set up auto-refresh
+        if (window.CONFIG?.dashboardRefreshInterval) {
+            dashboardRefreshInterval = setInterval(() => {
+                if (authManager && authManager.isLoggedIn()) {
+                    loadDashboardData();
+                }
+            }, window.CONFIG.dashboardRefreshInterval);
+        }
+    });
 });
+
+// Wait for authentication
+async function waitForAuth() {
+    return new Promise((resolve) => {
+        const checkAuth = () => {
+            if (window.authManager && authManager.isLoggedIn()) {
+                resolve();
+            } else if (window.authManager) {
+                // Auth manager exists but not logged in, wait for login
+                const checkLogin = setInterval(() => {
+                    if (authManager.isLoggedIn()) {
+                        clearInterval(checkLogin);
+                        resolve();
+                    }
+                }, 100);
+            } else {
+                // Auth manager not ready yet
+                setTimeout(checkAuth, 100);
+            }
+        };
+        checkAuth();
+    });
+}
 
 // Load main dashboard statistics
 async function loadDashboardData() {
@@ -147,6 +177,8 @@ function showDashboardError(message) {
 
 // Manual refresh function
 function refreshDashboard() {
+    if (!authManager.requireAuth()) return;
+    
     window.debugLog('Manual dashboard refresh triggered');
     
     // Show loading state
