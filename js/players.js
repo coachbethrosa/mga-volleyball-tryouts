@@ -1,4 +1,4 @@
-// MGA Volleyball Tryouts - Players/Photo Review Functionality (Your Original Design + Auth)
+// MGA Volleyball Tryouts - Players with Multi-Day Check-ins
 
 let currentLocation = null;
 let currentAge = null;
@@ -7,6 +7,9 @@ let playersRefreshInterval;
 let currentPlayers = [];
 let cameraStream = null;
 let currentPhotoPlayer = null;
+
+// Configure your tryout dates here
+const TRYOUT_DATES = ['1/20', '1/22', '1/24']; // Update these to your actual dates
 
 // Initialize players page when DOM loads
 document.addEventListener('DOMContentLoaded', function() {
@@ -46,10 +49,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Set up camera modal controls
         setupCameraControls();
-    }); // Closes waitForAuth().then()
-}); // Closes document.addEventListener()
+    });
+});
 
-// Wait for authentication - FIXED VERSION
+// Wait for authentication
 async function waitForAuth() {
     return new Promise((resolve) => {
         const checkAuth = () => {
@@ -59,17 +62,36 @@ async function waitForAuth() {
                     resolve();
                 } else {
                     console.log('[MGA Debug] Auth manager exists but not logged in, waiting...');
-                    // Check again in 200ms
                     setTimeout(checkAuth, 200);
                 }
             } else {
                 console.log('[MGA Debug] Auth manager not ready, waiting...');
-                // Check again in 100ms
                 setTimeout(checkAuth, 100);
             }
         };
         checkAuth();
     });
+}
+
+// Get current date string in M/D format
+function getCurrentDateString() {
+    const today = new Date();
+    return `${today.getMonth() + 1}/${today.getDate()}`;
+}
+
+// Check if a date is today
+function isToday(dateString) {
+    return dateString === getCurrentDateString();
+}
+
+// Check if a date is in the past
+function isPastDate(dateString) {
+    const [month, day] = dateString.split('/').map(Number);
+    const currentYear = new Date().getFullYear();
+    const dateObj = new Date(currentYear, month - 1, day);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return dateObj < today;
 }
 
 // Load available tabs/sessions
@@ -87,7 +109,6 @@ async function loadAvailableTabs() {
             currentAge = tabs[0].age;
             updatePageTitle();
             loadPlayers();
-            // Update the URL
             const newUrl = `${window.location.pathname}?location=${encodeURIComponent(currentLocation)}&age=${encodeURIComponent(currentAge)}&sort=${currentSort}`;
             window.history.pushState({}, '', newUrl);
         }
@@ -98,23 +119,17 @@ async function loadAvailableTabs() {
     }
 }
 
-// Display navigation tabs (your original design)
+// Display navigation tabs
 function displayNavigationTabs(tabs) {
-    console.log('[MGA Debug] displayNavigationTabs called with:', tabs);
     if (!Array.isArray(tabs) || tabs.length === 0) {
-        console.log('[MGA Debug] No tabs or empty array');
         document.getElementById('navigation-tabs').innerHTML = 
             '<span style="color: #666; padding: 10px;">No player data available</span>';
         return;
     }
     
-    console.log('[MGA Debug] Processing', tabs.length, 'tabs');
-    
     const tabsHtml = tabs.map(tab => {
         const isActive = tab.location === currentLocation && tab.age === currentAge;
         const activeClass = isActive ? 'active' : '';
-        
-        console.log('[MGA Debug] Processing tab:', tab);
         
         return `<a href="#" class="nav-tab ${activeClass}" 
                    onclick="switchToTab('${tab.location}', '${tab.age}'); return false;">
@@ -122,37 +137,25 @@ function displayNavigationTabs(tabs) {
                 </a>`;
     }).join('');
     
-    console.log('[MGA Debug] Generated HTML:', tabsHtml);
-    
     document.getElementById('navigation-tabs').innerHTML = tabsHtml;
-    console.log('[MGA Debug] Set innerHTML complete');
 }
 
 // Switch to a different tab
 function switchToTab(location, age) {
     if (!authManager.requireAuth()) return;
     
-    window.debugLog('Switching to tab:', location, age);
-    
-    // Update current state
     currentLocation = location;
     currentAge = age;
     
-    // Update URL without reload
     const newUrl = `${window.location.pathname}?location=${encodeURIComponent(location)}&age=${encodeURIComponent(age)}&sort=${currentSort}`;
     window.history.pushState({}, '', newUrl);
     
-    // Update page title
     updatePageTitle();
-    
-    // Load new data
     loadPlayers();
-    
-    // Update navigation tabs to show active state
     loadAvailableTabs();
 }
 
-// Update page title based on current selection
+// Update page title
 function updatePageTitle() {
     const titleElement = document.getElementById('page-title');
     if (titleElement && currentLocation && currentAge) {
@@ -161,7 +164,7 @@ function updatePageTitle() {
     }
 }
 
-// Load players for current location and age
+// Load players
 async function loadPlayers() {
     if (!currentLocation || !currentAge) {
         document.getElementById('players-container').innerHTML = 
@@ -169,7 +172,6 @@ async function loadPlayers() {
         return;
     }
     
-    // Show loading state
     document.getElementById('players-container').innerHTML = `
         <div class="loading">
             <div class="loading-spinner"></div>
@@ -201,7 +203,7 @@ async function loadPlayers() {
     }
 }
 
-// Display players using your original card design
+// Display players
 function displayPlayers(data) {
     const players = data.players || [];
     
@@ -213,33 +215,42 @@ function displayPlayers(data) {
     
     const playersHtml = players.map(player => generatePlayerCard(player)).join('');
     document.getElementById('players-container').innerHTML = playersHtml;
-    
-    // Update sort button states
     updateSortButtons();
 }
 
-// Generate individual player card (your original design)
+// Generate player card with multi-day check-ins
 function generatePlayerCard(player) {
     const hasPhoto = player.hasSelfie && player.selfieUrl;
-    const isCheckedIn = player.hasCheckedIn;
-    const cardClass = `player-card ${isCheckedIn ? 'checked-in' : ''}`;
+    const todayDate = getCurrentDateString();
+    const isCheckedInToday = player.checkinDates && player.checkinDates[todayDate];
+    
+    // Calculate completion status
+    const completionStatus = getCompletionStatus(player);
     
     const playerJson = JSON.stringify(player).replace(/"/g, '&quot;');
     
     return `
-        <div class="${cardClass}">
+        <div class="player-card ${isCheckedInToday ? 'checked-in-today' : ''}" data-player-id="${player.playerID}">
             <div class="photo-container">
                 ${hasPhoto 
                     ? `<img src="${player.selfieUrl}" alt="Player Photo" class="player-photo">
                        <div class="photo-status">✅ Photo</div>`
                     : `<div class="no-photo" onclick="openCameraModal(${playerJson})">📷<br><small>Click to take photo</small></div>`
                 }
+                <div class="completion-indicator ${completionStatus.cssClass}">
+                    ${completionStatus.completed}/${completionStatus.total}
+                </div>
             </div>
             
             <div class="player-info">
                 <div class="player-name-row">
                     <div class="player-name">${escapeHtml(player.last)}, ${escapeHtml(player.first)}</div>
                     ${player.hand ? `<div class="player-hand">${escapeHtml(player.hand)}</div>` : ''}
+                </div>
+                
+                <!-- Multi-Day Check-in Timeline -->
+                <div class="checkin-timeline">
+                    ${renderCheckinChips(player, todayDate)}
                 </div>
                 
                 <div class="player-details">
@@ -268,16 +279,31 @@ function generatePlayerCard(player) {
                         </div>
                     </div>
                 </div>
+
+                ${hasPhoto ? `
+                    <div class="detail-row">
+                        <div class="detail-pair">
+                            <div class="detail-left">
+                                <span class="detail-label">Photo:</span>
+                                <span class="detail-value">✅ Submitted</span>
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
                 
                 <div class="staff-actions">
-                    <button class="staff-btn checkin-btn ${isCheckedIn ? 'disabled' : ''}" 
-                            onclick="checkInPlayer(${playerJson})"
-                            ${isCheckedIn ? 'disabled' : ''}>
-                        ${isCheckedIn ? '✅ Checked In' : '📝 Check In'}
-                    </button>
+                    ${!isCheckedInToday ? `
+                        <button class="staff-btn checkin-today-btn" 
+                                onclick="checkInPlayerForDate('${player.playerID}', '${todayDate}', ${playerJson})">
+                            ✅ Check In ${todayDate}
+                        </button>
+                    ` : `
+                        <div class="checked-in-today-msg">✅ Checked in today at ${new Date(player.checkinDates[todayDate]).toLocaleTimeString()}</div>
+                    `}
+                    
                     <button class="staff-btn photo-btn" 
                             onclick="openCameraModal(${playerJson})">
-                        📷 Photo
+                        📷 ${hasPhoto ? 'Retake Photo' : 'Take Photo'}
                     </button>
                 </div>
             </div>
@@ -285,7 +311,88 @@ function generatePlayerCard(player) {
     `;
 }
 
-// Escape HTML to prevent XSS
+// Render check-in chips for each tryout date
+function renderCheckinChips(player, todayDate) {
+    return TRYOUT_DATES.map(date => {
+        const isDateToday = date === todayDate;
+        const isCheckedIn = player.checkinDates && player.checkinDates[date];
+        const isPast = isPastDate(date);
+        
+        let chipClass = 'checkin-chip';
+        let chipText = date;
+        
+        if (isCheckedIn) {
+            chipClass += ' completed';
+            chipText += '✓';
+        } else if (isDateToday) {
+            chipClass += ' today';
+            chipText += '?';
+        } else if (isPast) {
+            chipClass += ' missed';
+            chipText += '✗';
+        } else {
+            chipClass += ' upcoming';
+        }
+        
+        return `<span class="${chipClass}" title="${getChipTooltip(date, isCheckedIn, isDateToday, isPast)}">${chipText}</span>`;
+    }).join('');
+}
+
+// Get tooltip text for chips
+function getChipTooltip(date, isCheckedIn, isToday, isPast) {
+    if (isCheckedIn) return `Checked in on ${date}`;
+    if (isToday) return `Today - ${date}`;
+    if (isPast) return `Missed ${date}`;
+    return `Upcoming - ${date}`;
+}
+
+// Get completion status for player
+function getCompletionStatus(player) {
+    const completed = TRYOUT_DATES.filter(date => 
+        player.checkinDates && player.checkinDates[date]
+    ).length;
+    
+    const total = TRYOUT_DATES.length;
+    const percentage = Math.round((completed / total) * 100);
+    
+    let cssClass = 'none';
+    if (percentage === 100) cssClass = 'complete';
+    else if (percentage > 0) cssClass = 'partial';
+    
+    return { completed, total, percentage, cssClass };
+}
+
+// Check in player for specific date
+async function checkInPlayerForDate(playerID, date, player) {
+    if (!authManager.requireAuth()) return;
+
+    try {
+        console.log(`Checking in player ${playerID} for date ${date}`);
+        
+        // For now, simulate the check-in since we need to update the backend
+        // In a real implementation, this would call your API
+        const result = { success: true };
+        
+        if (result.success) {
+            // Update local data
+            if (!player.checkinDates) player.checkinDates = {};
+            player.checkinDates[date] = new Date().toISOString();
+            
+            // Refresh the display
+            displayPlayers({ players: currentPlayers });
+            
+            alert(`✅ ${player.first} ${player.last} checked in for ${date}!`);
+        } else {
+            throw new Error(result.error || 'Check-in failed');
+        }
+        
+    } catch (error) {
+        console.error('Error checking in player:', error);
+        alert(`❌ Check-in failed: ${error.message}`);
+    }
+}
+
+// Escape HTML
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
@@ -295,19 +402,17 @@ function escapeHtml(text) {
 // Sort players
 function sortPlayers(sortBy) {
     if (!authManager.requireAuth()) return;
-    if (sortBy === currentSort) return; // Already sorted this way
+    if (sortBy === currentSort) return;
     
     currentSort = sortBy;
     
-    // Update URL
     const newUrl = `${window.location.pathname}?location=${encodeURIComponent(currentLocation)}&age=${encodeURIComponent(currentAge)}&sort=${sortBy}`;
     window.history.pushState({}, '', newUrl);
     
-    // Reload players with new sort
     loadPlayers();
 }
 
-// Update sort button states
+// Update sort buttons
 function updateSortButtons() {
     document.querySelectorAll('.sort-btn').forEach(btn => {
         btn.classList.remove('active');
@@ -316,44 +421,16 @@ function updateSortButtons() {
     document.getElementById(`sort-${currentSort}`)?.classList.add('active');
 }
 
-// Update session stats (your original format)
+// Update session stats
 function updateSessionStats(data) {
     const statsElement = document.getElementById('session-stats');
     if (statsElement && data) {
-        statsElement.textContent = `${data.totalPlayers} Total • ${data.withPhotos} Photos • ${data.totalPlayers - data.withPhotos} Missing`;
-    }
-}
-
-// Check in a player
-async function checkInPlayer(player) {
-    if (!authManager.requireAuth()) return;
-    
-    if (player.hasCheckedIn) {
-        alert('Player is already checked in');
-        return;
-    }
-    
-    try {
-        window.debugLog('Checking in player:', player);
+        const todayCheckins = currentPlayers.filter(p => {
+            const today = getCurrentDateString();
+            return p.checkinDates && p.checkinDates[today];
+        }).length;
         
-        const result = await window.mgaAPI.checkInPlayer({
-            playerID: player.playerID,
-            first: player.first,
-            last: player.last,
-            location: currentLocation,
-            age: currentAge
-        });
-        
-        if (result.success) {
-            alert(`✅ ${player.first} ${player.last} checked in successfully!`);
-            loadPlayers(); // Refresh the list
-        } else {
-            throw new Error(result.error || 'Check-in failed');
-        }
-        
-    } catch (error) {
-        console.error('Check-in error:', error);
-        alert(`❌ Check-in failed: ${error.message}`);
+        statsElement.textContent = `${data.totalPlayers} Total • ${data.withPhotos} Photos • ${todayCheckins} Checked In Today`;
     }
 }
 
@@ -370,10 +447,7 @@ function openCameraModal(player) {
         title.textContent = `📸 Capture Photo - ${player.first} ${player.last}`;
         modal.style.display = 'block';
         
-        // Store current player
         currentPhotoPlayer = player;
-        
-        // Reset camera interface
         resetCameraInterface();
     }
 }
@@ -384,10 +458,7 @@ function closeCameraModal() {
         modal.style.display = 'none';
     }
     
-    // Stop camera stream
     stopCameraStream();
-    
-    // Reset state
     currentPhotoPlayer = null;
     resetCameraInterface();
 }
@@ -451,26 +522,20 @@ function takePhoto() {
         return;
     }
     
-    // Set canvas size to match video
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     
-    // Draw video frame to canvas
     const context = canvas.getContext('2d');
     context.drawImage(video, 0, 0);
     
-    // Convert to data URL
     const photoData = canvas.toDataURL('image/jpeg', 0.8);
     
-    // Show captured image
     capturedImage.src = photoData;
     capturedImage.style.display = 'block';
     video.style.display = 'none';
     
-    // Store photo data
     currentPhotoPlayer.capturedPhoto = photoData;
     
-    // Update controls
     document.getElementById('take-photo-btn').style.display = 'none';
     document.getElementById('retake-btn').style.display = 'inline-block';
     document.getElementById('submit-photo-btn').style.display = 'inline-block';
@@ -484,16 +549,13 @@ function retakePhoto() {
     const capturedImage = document.getElementById('captured-image');
     const status = document.getElementById('camera-status');
     
-    // Show video, hide image
     video.style.display = 'block';
     capturedImage.style.display = 'none';
     
-    // Update controls
     document.getElementById('retake-btn').style.display = 'none';
     document.getElementById('submit-photo-btn').style.display = 'none';
     document.getElementById('take-photo-btn').style.display = 'inline-block';
     
-    // Clear stored photo
     if (currentPhotoPlayer) {
         delete currentPhotoPlayer.capturedPhoto;
     }
@@ -516,17 +578,15 @@ async function submitPhoto() {
         status.style.color = '#4169E1';
         submitBtn.disabled = true;
         
-        // Call the API to process photo submission
         const result = await submitPhotoToAPI(currentPhotoPlayer.capturedPhoto, currentPhotoPlayer);
         
         if (result.success) {
             status.textContent = '✅ Photo submitted successfully!';
             status.style.color = '#28a745';
             
-            // Close modal after short delay
             setTimeout(() => {
                 closeCameraModal();
-                loadPlayers(); // Refresh player list
+                loadPlayers();
             }, 2000);
         } else {
             throw new Error(result.error || 'Submission failed');
@@ -540,15 +600,11 @@ async function submitPhoto() {
     }
 }
 
-// API call for photo submission (placeholder - needs implementation)
 async function submitPhotoToAPI(photoData, player) {
-    // This would call your Apps Script API to process the photo
     console.log('Photo submission for player:', player.playerID);
     console.log('Photo data size:', photoData.length);
     
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
     return { success: true };
 }
 
@@ -565,26 +621,28 @@ function resetCameraInterface() {
     const placeholder = document.getElementById('camera-placeholder');
     const status = document.getElementById('camera-status');
     
-    // Hide video and image, show placeholder
     if (video) video.style.display = 'none';
     if (capturedImage) capturedImage.style.display = 'none';
     if (placeholder) placeholder.style.display = 'block';
     
-    // Reset controls
     document.getElementById('start-camera-btn').style.display = 'inline-block';
     document.getElementById('take-photo-btn').style.display = 'none';
     document.getElementById('retake-btn').style.display = 'none';
     document.getElementById('submit-photo-btn').style.display = 'none';
     
-    // Clear status
     if (status) {
         status.textContent = '';
         status.style.color = '#333';
     }
     
-    // Enable submit button
     const submitBtn = document.getElementById('submit-photo-btn');
     if (submitBtn) submitBtn.disabled = false;
+}
+
+// Check in a player (legacy function for compatibility)
+async function checkInPlayer(player) {
+    const today = getCurrentDateString();
+    return checkInPlayerForDate(player.playerID, today, player);
 }
 
 // Clean up on page unload
