@@ -1,713 +1,301 @@
-// Group Photos - Complete functionality
-// This file is loaded only on group-photos.html
-
-let groupPhotoState = {
-    location: null,
-    age: null,
-    position: null,
-    allPlayers: [],
-    selectedPlayers: [],
-    cameraStream: null,
-    capturedPhoto: null,
-    detectedNumbers: [],
-    confirmedPlayers: [],
-    photoCount: 1
-};
-
-let uploadState = {
-    photoData: null,
-    photoType: null,
-    selectedPlayers: [],
-    allPlayers: []
-};
-
-// Initialize group photos page
-document.addEventListener('DOMContentLoaded', function() {
-    debugLog('Group Photos page loaded');
-    
-    // Wait for auth
-    waitForAuth().then(() => {
-        debugLog('Group Photos auth complete');
-        updatePageTitle();
-        setupEventListeners();
-    });
-});
-
-// Setup event listeners
-function setupEventListeners() {
-    const startGroupCameraBtn = document.getElementById('start-group-camera-btn');
-    const takeGroupPhotoBtn = document.getElementById('take-group-photo-btn');
-    const retakeGroupBtn = document.getElementById('retake-group-btn');
-    const analyzeGroupBtn = document.getElementById('analyze-group-btn');
-    
-    if (startGroupCameraBtn) startGroupCameraBtn.addEventListener('click', startGroupCamera);
-    if (takeGroupPhotoBtn) takeGroupPhotoBtn.addEventListener('click', takeGroupPhoto);
-    if (retakeGroupBtn) retakeGroupBtn.addEventListener('click', retakeGroupPhoto);
-    if (analyzeGroupBtn) analyzeGroupBtn.addEventListener('click', analyzeGroupPhoto);
-}
-
-// Update page title
-function updatePageTitle() {
-    const titleElement = document.getElementById('page-title');
-    if (titleElement) {
-        titleElement.textContent = '📸 Group Photos';
-    }
-}
-
-// Open group photo modal
-function openGroupPhotoModal() {
-    if (!authManager.requireAuth()) return;
-    
-    const modal = document.getElementById('group-photo-modal');
-    modal.style.display = 'block';
-    resetGroupPhotoState();
-    showGroupPhotoStep('filters');
-}
-
-// Close group photo modal
-function closeGroupPhotoModal() {
-    const modal = document.getElementById('group-photo-modal');
-    modal.style.display = 'none';
-    stopGroupCameraStream();
-    resetGroupPhotoState();
-}
-
-// Reset group photo state
-function resetGroupPhotoState() {
-    groupPhotoState = {
-        location: null,
-        age: null,
-        position: null,
-        allPlayers: [],
-        selectedPlayers: [],
-        cameraStream: null,
-        capturedPhoto: null,
-        detectedNumbers: [],
-        confirmedPlayers: [],
-        photoCount: 1
-    };
-    
-    // Reset form
-    document.getElementById('group-location').value = '';
-    document.getElementById('group-age').value = '';
-    document.getElementById('group-position').value = '';
-}
-
-// Show specific step in group photo workflow
-function showGroupPhotoStep(step) {
-    const steps = ['filters', 'checklist', 'camera', 'confirm', 'results'];
-    steps.forEach(s => {
-        const element = document.getElementById(`group-photo-${s}`);
-        if (element) {
-            element.style.display = s === step ? 'block' : 'none';
-        }
-    });
-}
-
-// Load players for selected position
-async function loadPositionPlayers() {
-    const location = document.getElementById('group-location').value;
-    const age = document.getElementById('group-age').value;
-    const position = document.getElementById('group-position').value;
-    
-    if (!location || !age || !position) {
-        alert('Please select location, age, and position');
-        return;
-    }
-    
-    try {
-        groupPhotoState.location = location;
-        groupPhotoState.age = age;
-        groupPhotoState.position = position;
-        
-        debugLog(`Loading players for ${location} ${age} ${position}`);
-        
-        // Get all players for this location/age
-        const data = await window.mgaAPI.getPlayers(location, age, 'pinny');
-        debugLog('All players received:', data.players);
-        
-        if (!data.players || data.players.length === 0) {
-            alert(`No players found for ${location} ${age}. Please check your data.`);
-            return;
-        }
-        
-        // Debug: Log all unique positions found
-        const allPositions = [...new Set(data.players.map(p => p.position).filter(p => p))];
-        debugLog('All positions found in data:', allPositions);
-        
-        // Filter by position - be more flexible with matching
-        const positionPlayers = data.players.filter(player => {
-            const playerPosition = player.position || '';
-            const hasMatchingPosition = playerPosition.toLowerCase().includes(position.toLowerCase()) || 
-                                      position.toLowerCase().includes(playerPosition.toLowerCase());
-            const hasPinny = player.pinny && player.pinny !== 'N/A' && player.pinny.toString().trim() !== '';
-            
-            debugLog(`Player: ${player.first} ${player.last}, Position: "${playerPosition}", Pinny: "${player.pinny}", Match: ${hasMatchingPosition}, HasPinny: ${hasPinny}`);
-            
-            return hasMatchingPosition && hasPinny;
-        });
-        
-        debugLog(`Found ${positionPlayers.length} players matching position "${position}" with valid pinnies`);
-        
-        if (positionPlayers.length === 0) {
-            // Show helpful error message
-            const playersWithoutPinnies = data.players.filter(player => {
-                const playerPosition = player.position || '';
-                return playerPosition.toLowerCase().includes(position.toLowerCase()) || 
-                       position.toLowerCase().includes(playerPosition.toLowerCase());
-            });
-            
-            if (playersWithoutPinnies.length > 0) {
-                alert(`Found ${playersWithoutPinnies.length} ${position} players, but none have pinny numbers assigned. Please assign pinny numbers first.`);
-            } else {
-                alert(`No ${position} players found for ${location} ${age}. Available positions: ${allPositions.join(', ')}`);
-            }
-            return;
-        }
-        
-        groupPhotoState.allPlayers = positionPlayers;
-        groupPhotoState.selectedPlayers = [...positionPlayers]; // Default: select all
-        
-        displayPlayersChecklist(positionPlayers);
-        updatePositionTitle();
-        showGroupPhotoStep('checklist');
-        
-    } catch (error) {
-        console.error('Error loading position players:', error);
-        alert('Error loading players. Please try again.');
-    }
-}
-
-// Display players checklist
-function displayPlayersChecklist(players) {
-    const container = document.getElementById('players-checklist');
-    const totalElement = document.getElementById('players-total');
-    
-    if (players.length === 0) {
-        container.innerHTML = '<div style="text-align: center; color: #666;">No players found for this position.</div>';
-        totalElement.textContent = '0';
-        return;
-    }
-    
-    const html = players.map(player => `
-        <div class="player-checkbox-item">
-            <input type="checkbox" 
-                   id="player-${player.playerID}" 
-                   checked 
-                   onchange="togglePlayerSelection('${player.playerID}')">
-            <label for="player-${player.playerID}">
-                <span class="player-pinny">#${escapeHtml(player.pinny)}</span>
-                <span class="player-name">${escapeHtml(formatPlayerName(player))}</span>
-                <span class="player-school">${escapeHtml(player.school || 'N/A')}</span>
-            </label>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Group Photos - MGA Volleyball Tryouts</title>
+    <link rel="icon" type="image/png" href="https://mgavolleyball.com/wp-content/uploads/2023/07/mga-logo-277x300.png">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <img src="https://mgavolleyball.com/wp-content/uploads/2023/07/mga-logo-277x300.png" 
+                 alt="MGA Volleyball Logo" 
+                 class="logo">
         </div>
-    `).join('');
-    
-    container.innerHTML = html;
-    totalElement.textContent = players.length;
-    updateSelectedCount();
-}
-
-// Toggle player selection
-function togglePlayerSelection(playerID) {
-    const player = groupPhotoState.allPlayers.find(p => p.playerID === playerID);
-    if (!player) return;
-    
-    const index = groupPhotoState.selectedPlayers.findIndex(p => p.playerID === playerID);
-    if (index > -1) {
-        groupPhotoState.selectedPlayers.splice(index, 1);
-    } else {
-        groupPhotoState.selectedPlayers.push(player);
-    }
-    
-    updateSelectedCount();
-}
-
-// Update selected count
-function updateSelectedCount() {
-    const selectedElement = document.getElementById('players-selected');
-    selectedElement.textContent = groupPhotoState.selectedPlayers.length;
-}
-
-// Select all players
-function selectAllPlayers() {
-    groupPhotoState.selectedPlayers = [...groupPhotoState.allPlayers];
-    
-    groupPhotoState.allPlayers.forEach(player => {
-        const checkbox = document.getElementById(`player-${player.playerID}`);
-        if (checkbox) checkbox.checked = true;
-    });
-    
-    updateSelectedCount();
-}
-
-// Clear all players
-function clearAllPlayers() {
-    groupPhotoState.selectedPlayers = [];
-    
-    groupPhotoState.allPlayers.forEach(player => {
-        const checkbox = document.getElementById(`player-${player.playerID}`);
-        if (checkbox) checkbox.checked = false;
-    });
-    
-    updateSelectedCount();
-}
-
-// Update position title
-function updatePositionTitle() {
-    const titleElement = document.getElementById('position-title');
-    const locationName = groupPhotoState.location === 'NORTH' ? 'North' : 'South';
-    titleElement.textContent = `${locationName} ${groupPhotoState.age} ${groupPhotoState.position}`;
-}
-
-// Start group photo
-function startGroupPhoto() {
-    if (groupPhotoState.selectedPlayers.length === 0) {
-        alert('Please select at least one player');
-        return;
-    }
-    
-    displayExpectedPlayers();
-    showGroupPhotoStep('camera');
-    resetGroupCameraInterface();
-}
-
-// Display expected players
-function displayExpectedPlayers() {
-    const container = document.getElementById('expected-players-list');
-    
-    const html = groupPhotoState.selectedPlayers
-        .sort((a, b) => parseInt(a.pinny) - parseInt(b.pinny))
-        .map(player => `
-            <span class="expected-player-chip">#${player.pinny} ${player.first} ${player.last}</span>
-        `).join('');
-    
-    container.innerHTML = html;
-}
-
-// Start group camera
-async function startGroupCamera() {
-    const previewContainer = document.getElementById('group-camera-preview');
-    const video = document.getElementById('group-camera-video');
-    const placeholder = document.getElementById('group-camera-placeholder');
-    const status = document.getElementById('group-camera-status');
-    
-    try {
-        status.textContent = 'Starting camera...';
-        status.style.color = '#4169E1';
         
-        // Use shared camera constraints for group photos
-        groupPhotoState.cameraStream = await navigator.mediaDevices.getUserMedia(CameraUtils.getGroupPhotoConstraints());
+        <div class="header-center">
+            <h1 id="page-title">📸 Group Photos</h1>
+            <div class="subtitle">Position Team Photos</div>
+        </div>
         
-        video.srcObject = groupPhotoState.cameraStream;
-        previewContainer.style.display = 'block';
-        placeholder.style.display = 'none';
-        
-        document.getElementById('start-group-camera-btn').style.display = 'none';
-        document.getElementById('take-group-photo-btn').style.display = 'inline-block';
-        
-        status.textContent = 'Camera ready! Position players and take photo';
-        status.style.color = '#28a745';
-        
-    } catch (error) {
-        console.error('Error starting group camera:', error);
-        status.textContent = 'Error: Could not access camera. Please check permissions.';
-        status.style.color = '#dc3545';
-    }
-}
-
-// Take group photo
-async function takeGroupPhoto() {
-    const video = document.getElementById('group-camera-video');
-    const canvas = document.getElementById('group-camera-canvas');
-    const capturedImage = document.getElementById('group-captured-image');
-    const status = document.getElementById('group-camera-status');
+        <div class="header-right">
+            <a href="index.html" class="nav-btn">📊 Dashboard</a>
+            <a href="players.html" class="nav-btn">👤 Player Photos</a>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
     
-    if (!video.videoWidth || !video.videoHeight) {
-        status.textContent = 'Error: Camera not ready';
-        status.style.color = '#dc3545';
-        return;
-    }
-    
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    
-    const context = canvas.getContext('2d');
-    context.drawImage(video, 0, 0);
-    
-    const photoData = canvas.toDataURL('image/jpeg', 0.8);
-    groupPhotoState.capturedPhoto = photoData;
-    
-    capturedImage.src = photoData;
-    capturedImage.style.display = 'block';
-    document.getElementById('group-camera-preview').style.display = 'none';
-    
-    document.getElementById('take-group-photo-btn').style.display = 'none';
-    document.getElementById('retake-group-btn').style.display = 'inline-block';
-    document.getElementById('analyze-group-btn').style.display = 'inline-block';
-    
-    status.textContent = 'Photo captured! Click "Detect Players" to analyze.';
-    status.style.color = '#28a745';
-}
-
-// Retake group photo
-function retakeGroupPhoto() {
-    const previewContainer = document.getElementById('group-camera-preview');
-    const capturedImage = document.getElementById('group-captured-image');
-    const status = document.getElementById('group-camera-status');
-    
-    previewContainer.style.display = 'block';
-    capturedImage.style.display = 'none';
-    
-    document.getElementById('retake-group-btn').style.display = 'none';
-    document.getElementById('analyze-group-btn').style.display = 'none';
-    document.getElementById('take-group-photo-btn').style.display = 'inline-block';
-    
-    groupPhotoState.capturedPhoto = null;
-    groupPhotoState.detectedNumbers = [];
-    
-    status.textContent = 'Ready to take photo again';
-    status.style.color = '#4169E1';
-}
-
-// Analyze group photo for pinny numbers
-async function analyzeGroupPhoto() {
-    if (!groupPhotoState.capturedPhoto) {
-        alert('No photo to analyze');
-        return;
-    }
-    
-    const status = document.getElementById('group-camera-status');
-    
-    try {
-        status.textContent = 'Analyzing photo for pinny numbers...';
-        status.style.color = '#4169E1';
-        
-        // Use shared OCR functions
-        const text = await detectTextInImage(groupPhotoState.capturedPhoto);
-        const allNumbers = extractNumbers(text);
-        
-        // Filter to only include numbers that match expected pinny numbers
-        const expectedPinnies = groupPhotoState.selectedPlayers.map(p => p.pinny);
-        const detectedPinnies = allNumbers.filter(num => expectedPinnies.includes(num));
-        
-        groupPhotoState.detectedNumbers = [...new Set(detectedPinnies)]; // Remove duplicates
-        
-        debugLog('Expected pinnies:', expectedPinnies);
-        debugLog('Detected pinnies:', groupPhotoState.detectedNumbers);
-        
-        // Initialize confirmed players based on detected numbers
-        groupPhotoState.confirmedPlayers = groupPhotoState.selectedPlayers.filter(player => 
-            groupPhotoState.detectedNumbers.includes(player.pinny)
-        );
-        
-        displayConfirmationScreen();
-        showGroupPhotoStep('confirm');
-        
-    } catch (error) {
-        console.error('OCR Error:', error);
-        status.textContent = 'Could not analyze photo. Please confirm players manually.';
-        status.style.color = '#666';
-        
-        // Fallback: show all selected players for manual confirmation
-        groupPhotoState.detectedNumbers = [];
-        groupPhotoState.confirmedPlayers = [...groupPhotoState.selectedPlayers];
-        displayConfirmationScreen();
-        showGroupPhotoStep('confirm');
-    }
-}
-
-// Display confirmation screen
-function displayConfirmationScreen() {
-    displayDetectedNumbers();
-    displayConfirmationChecklist();
-}
-
-// Display detected numbers
-function displayDetectedNumbers() {
-    const container = document.getElementById('detected-numbers-list');
-    const expectedPinnies = groupPhotoState.selectedPlayers.map(p => p.pinny);
-    
-    if (groupPhotoState.detectedNumbers.length === 0) {
-        container.innerHTML = '<div style="color: #666;">No pinny numbers detected automatically. Please confirm manually below.</div>';
-        return;
-    }
-    
-    const html = groupPhotoState.detectedNumbers.map(num => {
-        const expected = expectedPinnies.includes(num);
-        const cssClass = expected ? 'found' : 'unexpected';
-        return `<span class="detected-number-chip ${cssClass}">#${num}</span>`;
-    }).join('');
-    
-    // Add missing numbers
-    const missing = expectedPinnies.filter(pinny => !groupPhotoState.detectedNumbers.includes(pinny));
-    const missingHtml = missing.map(num => 
-        `<span class="detected-number-chip missing">#${num} (missing)</span>`
-    ).join('');
-    
-    container.innerHTML = html + missingHtml;
-}
-
-// Display confirmation checklist
-function displayConfirmationChecklist() {
-    const container = document.getElementById('confirm-players-list');
-    
-    const html = groupPhotoState.selectedPlayers.map(player => {
-        const isConfirmed = groupPhotoState.confirmedPlayers.some(p => p.playerID === player.playerID);
-        return `
-            <div class="confirm-player-item">
-                <input type="checkbox" 
-                       id="confirm-${player.playerID}" 
-                       ${isConfirmed ? 'checked' : ''}
-                       onchange="toggleConfirmedPlayer('${player.playerID}')">
-                <label for="confirm-${player.playerID}">
-                    <span class="player-pinny">#${player.pinny}</span>
-                    <span class="player-name">${player.first} ${player.last}</span>
-                </label>
+    <!-- Main Actions Menu -->
+    <div class="container">
+        <div class="group-actions-menu">
+            <h2>Choose an Option</h2>
+            <div class="action-cards">
+                <div class="action-card" onclick="openGroupPhotoModal()">
+                    <div class="action-icon">📸</div>
+                    <h3>Take Group Photos</h3>
+                    <p>Position players by location, age, and position. Take photos with automatic player detection.</p>
+                </div>
+                
+                <div class="action-card" onclick="openUploadModal()">
+                    <div class="action-icon">📁</div>
+                    <h3>Upload Existing Photos</h3>
+                    <p>Upload photos taken outside the system and connect them to the correct players.</p>
+                </div>
+                
+                <div class="action-card" onclick="viewGroupPhotos()">
+                    <div class="action-icon">🖼️</div>
+                    <h3>View All Group Photos</h3>
+                    <p>Browse and manage all group photos that have been taken and uploaded.</p>
+                </div>
             </div>
-        `;
-    }).join('');
-    
-    container.innerHTML = html;
-}
+        </div>
+    </div>
 
-// Toggle confirmed player
-function toggleConfirmedPlayer(playerID) {
-    const player = groupPhotoState.selectedPlayers.find(p => p.playerID === playerID);
-    if (!player) return;
-    
-    const index = groupPhotoState.confirmedPlayers.findIndex(p => p.playerID === playerID);
-    if (index > -1) {
-        groupPhotoState.confirmedPlayers.splice(index, 1);
-    } else {
-        groupPhotoState.confirmedPlayers.push(player);
-    }
-}
+    <!-- Group Photo Modal -->
+    <div id="group-photo-modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close" onclick="closeGroupPhotoModal()">&times;</span>
+            <h3 id="group-photo-title">📸 Group Photos by Position</h3>
+            
+            <!-- Step 1: Select Filters -->
+            <div id="group-photo-filters" class="group-photo-step">
+                <h4>📋 Select Position Group</h4>
+                <div class="filter-row">
+                    <label>Location:</label>
+                    <select id="group-location">
+                        <option value="">Choose Location</option>
+                        <option value="NORTH">North</option>
+                        <option value="SOUTH">South</option>
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <label>Age Group:</label>
+                    <select id="group-age">
+                        <option value="">Choose Age</option>
+                        <option value="U13">U13</option>
+                        <option value="U14">U14</option>
+                        <option value="U15">U15</option>
+                        <option value="U16">U16</option>
+                        <option value="U17">U17</option>
+                        <option value="U18">U18</option>
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <label>Position:</label>
+                    <select id="group-position">
+                        <option value="">Choose Position</option>
+                        <option value="Setter">Setter</option>
+                        <option value="Outside Hitter">Outside Hitter</option>
+                        <option value="Middle Blocker">Middle Blocker</option>
+                        <option value="Right Side">Right Side</option>
+                        <option value="Opposite">Opposite</option>
+                        <option value="Libero">Libero</option>
+                        <option value="Defensive Specialist">Defensive Specialist</option>
+                    </select>
+                </div>
+                <button class="staff-btn checkin-btn" onclick="loadPositionPlayers()">📋 Load Players</button>
+            </div>
 
-// Go back to camera
-function goBackToCamera() {
-    showGroupPhotoStep('camera');
-}
+            <!-- Step 2: Player Checklist -->
+            <div id="group-photo-checklist" class="group-photo-step" style="display: none;">
+                <div class="checklist-header">
+                    <h4 id="position-title">Position Players</h4>
+                    <div class="checklist-stats">
+                        <span id="players-selected">0</span> of <span id="players-total">0</span> selected
+                    </div>
+                </div>
+                <div id="players-checklist" class="players-checklist">
+                    <!-- Players will be populated here -->
+                </div>
+                <div class="checklist-actions">
+                    <button class="staff-btn secondary-btn" onclick="selectAllPlayers()">✅ Select All</button>
+                    <button class="staff-btn secondary-btn" onclick="clearAllPlayers()">❌ Clear All</button>
+                    <button class="staff-btn checkin-btn" onclick="startGroupPhoto()">📸 Take Group Photo</button>
+                </div>
+            </div>
 
-// Save group photo
-async function saveGroupPhoto() {
-    if (groupPhotoState.confirmedPlayers.length === 0) {
-        alert('Please select at least one player in the photo');
-        return;
-    }
-    
-    try {
-        const status = document.getElementById('group-camera-status');
-        status.textContent = 'Saving group photo...';
-        status.style.color = '#4169E1';
-        
-        // Create photo metadata
-        const photoMetadata = {
-            type: 'group',
-            location: groupPhotoState.location,
-            age: groupPhotoState.age,
-            position: groupPhotoState.position,
-            players: groupPhotoState.confirmedPlayers.map(p => ({
-                playerID: p.playerID,
-                pinny: p.pinny,
-                name: `${p.first} ${p.last}`
-            })),
-            photoNumber: groupPhotoState.photoCount,
-            timestamp: new Date().toISOString()
-        };
-        
-        // Save photo (placeholder - you'll need to implement this API call)
-        console.log('Saving group photo with metadata:', photoMetadata);
-        console.log('Photo data size:', groupPhotoState.capturedPhoto.length);
-        
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        const result = { success: true };
-        
-        if (result.success) {
-            displayResults();
-            showGroupPhotoStep('results');
-        } else {
-            throw new Error(result.error || 'Failed to save photo');
-        }
-        
-    } catch (error) {
-        console.error('Error saving group photo:', error);
-        alert(`Error saving photo: ${error.message}`);
-    }
-}
+            <!-- Step 3: Camera with Player Detection -->
+            <div id="group-photo-camera" class="group-photo-step" style="display: none;">
+                <h4>Position Players in Order by Pinny Number</h4>
+                <div id="group-camera-container">
+                    <div id="group-camera-preview" style="position: relative; display: none;">
+                        <video id="group-camera-video" autoplay playsinline style="width: 100%; max-width: 600px; border-radius: 10px;"></video>
+                        <div class="group-camera-overlay">
+                            <div class="group-pose-guide"></div>
+                        </div>
+                    </div>
+                    <canvas id="group-camera-canvas" style="display: none;"></canvas>
+                    <img id="group-captured-image" style="display: none; max-width: 100%; border-radius: 8px;">
+                    <div id="group-camera-placeholder" style="padding: 2rem; text-align: center; color: #666;">
+                        📷<br><small>Click "Start Camera" to begin</small>
+                    </div>
+                </div>
+                
+                <!-- Expected Players Display -->
+                <div class="expected-players">
+                    <h5>Expected in this photo:</h5>
+                    <div id="expected-players-list"></div>
+                </div>
+                
+                <div class="group-camera-controls">
+                    <button id="start-group-camera-btn" class="staff-btn photo-btn">📷 Start Camera</button>
+                    <button id="take-group-photo-btn" class="staff-btn checkin-btn" style="display: none;">📸 Take Photo</button>
+                    <button id="retake-group-btn" class="staff-btn secondary-btn" style="display: none;">🔄 Retake</button>
+                    <button id="analyze-group-btn" class="staff-btn checkin-btn" style="display: none;">🔍 Detect Players</button>
+                </div>
+                <div id="group-camera-status" style="margin-top: 1rem; text-align: center; font-weight: 600;"></div>
+            </div>
 
-// Display results
-function displayResults() {
-    const messageElement = document.getElementById('results-message');
-    const remainingElement = document.getElementById('remaining-players');
-    const anotherBtn = document.querySelector('button[onclick="takeAnotherGroupPhoto()"]');
-    
-    const confirmedCount = groupPhotoState.confirmedPlayers.length;
-    
-    messageElement.innerHTML = `
-        <h5>✅ Photo ${groupPhotoState.photoCount} saved successfully!</h5>
-        <p>Captured ${confirmedCount} players in this photo.</p>
-    `;
-    
-    // Check if there are remaining players
-    const remaining = groupPhotoState.selectedPlayers.filter(selected => 
-        !groupPhotoState.confirmedPlayers.some(confirmed => confirmed.playerID === selected.playerID)
-    );
-    
-    if (remaining.length > 0) {
-        remainingElement.innerHTML = `
-            <h6>Remaining players (${remaining.length}):</h6>
-            <div>${remaining.map(p => `<span class="expected-player-chip">#${p.pinny} ${p.first} ${p.last}</span>`).join('')}</div>
-        `;
-        anotherBtn.style.display = 'inline-block';
-    } else {
-        remainingElement.innerHTML = '<h6>✅ All players captured!</h6>';
-        anotherBtn.style.display = 'none';
-    }
-}
+            <!-- Step 4: Confirm Players in Photo -->
+            <div id="group-photo-confirm" class="group-photo-step" style="display: none;">
+                <h4>Confirm Players in Photo</h4>
+                <div class="detected-vs-expected">
+                    <div class="detected-numbers">
+                        <h5>Detected Pinny Numbers:</h5>
+                        <div id="detected-numbers-list"></div>
+                    </div>
+                    <div class="confirm-checklist">
+                        <h5>Confirm players in photo:</h5>
+                        <div id="confirm-players-list"></div>
+                    </div>
+                </div>
+                <div class="confirm-actions">
+                    <button class="staff-btn secondary-btn" onclick="goBackToCamera()">📷 Retake Photo</button>
+                    <button class="staff-btn checkin-btn" onclick="saveGroupPhoto()">💾 Save Photo</button>
+                </div>
+            </div>
 
-// Take another group photo
-function takeAnotherGroupPhoto() {
-    groupPhotoState.photoCount++;
-    
-    // Remove confirmed players from selected players
-    groupPhotoState.selectedPlayers = groupPhotoState.selectedPlayers.filter(selected => 
-        !groupPhotoState.confirmedPlayers.some(confirmed => confirmed.playerID === selected.playerID)
-    );
-    
-    // Reset for next photo
-    groupPhotoState.confirmedPlayers = [];
-    groupPhotoState.capturedPhoto = null;
-    groupPhotoState.detectedNumbers = [];
-    
-    displayExpectedPlayers();
-    showGroupPhotoStep('camera');
-    resetGroupCameraInterface();
-}
+            <!-- Step 5: Results & Next Photo -->
+            <div id="group-photo-results" class="group-photo-step" style="display: none;">
+                <h4>Photo Saved Successfully!</h4>
+                <div class="results-summary">
+                    <div id="results-message"></div>
+                    <div id="remaining-players"></div>
+                </div>
+                <div class="results-actions">
+                    <button class="staff-btn checkin-btn" onclick="takeAnotherGroupPhoto()" style="display: none;">📸 Take Another Photo</button>
+                    <button class="staff-btn secondary-btn" onclick="finishGroupPhotos()">✅ Finish</button>
+                    <button class="staff-btn photo-btn" onclick="startNewPosition()">🔄 New Position</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-// Finish group photos
-function finishGroupPhotos() {
-    closeGroupPhotoModal();
-}
+    <!-- Photo Upload Modal -->
+    <div id="upload-photo-modal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close" onclick="closeUploadModal()">&times;</span>
+            <h3>📁 Upload & Connect Photos</h3>
+            
+            <div class="upload-section">
+                <h4>Select Photo to Upload</h4>
+                <input type="file" id="photo-upload-input" accept="image/*" onchange="handlePhotoUpload(event)">
+                <div id="upload-preview" style="margin-top: 1rem; display: none;">
+                    <img id="upload-preview-image" style="max-width: 100%; max-height: 300px; border-radius: 8px;">
+                </div>
+            </div>
+            
+            <div id="upload-detection" style="display: none;">
+                <h4>Select Photo Type</h4>
+                <div class="photo-type-selection">
+                    <button class="staff-btn checkin-btn" onclick="setUploadType('individual')">👤 Individual Player</button>
+                    <button class="staff-btn photo-btn" onclick="setUploadType('group')">👥 Group Photo</button>
+                </div>
+            </div>
+            
+            <!-- Individual Player Selection -->
+            <div id="upload-individual" style="display: none;">
+                <h4>Select Player</h4>
+                <div class="filter-row">
+                    <label>Location:</label>
+                    <select id="upload-location" onchange="loadUploadPlayers()">
+                        <option value="">Choose Location</option>
+                        <option value="NORTH">North</option>
+                        <option value="SOUTH">South</option>
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <label>Age Group:</label>
+                    <select id="upload-age" onchange="loadUploadPlayers()">
+                        <option value="">Choose Age</option>
+                        <option value="U13">U13</option>
+                        <option value="U14">U14</option>
+                        <option value="U15">U15</option>
+                        <option value="U16">U16</option>
+                        <option value="U17">U17</option>
+                        <option value="U18">U18</option>
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <label>Player:</label>
+                    <select id="upload-player">
+                        <option value="">Choose Player</option>
+                    </select>
+                </div>
+                <button class="staff-btn checkin-btn" onclick="saveIndividualUpload()">💾 Save Individual Photo</button>
+            </div>
+            
+            <!-- Group Photo Selection -->
+            <div id="upload-group" style="display: none;">
+                <h4>Connect to Players</h4>
+                <div class="filter-row">
+                    <label>Location:</label>
+                    <select id="upload-group-location" onchange="loadUploadGroupPlayers()">
+                        <option value="">Choose Location</option>
+                        <option value="NORTH">North</option>
+                        <option value="SOUTH">South</option>
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <label>Age Group:</label>
+                    <select id="upload-group-age" onchange="loadUploadGroupPlayers()">
+                        <option value="">Choose Age</option>
+                        <option value="U13">U13</option>
+                        <option value="U14">U14</option>
+                        <option value="U15">U15</option>
+                        <option value="U16">U16</option>
+                        <option value="U17">U17</option>
+                        <option value="U18">U18</option>
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <label>Position (optional):</label>
+                    <select id="upload-group-position">
+                        <option value="">All Positions</option>
+                        <option value="Setter">Setter</option>
+                        <option value="Outside Hitter">Outside Hitter</option>
+                        <option value="Middle Blocker">Middle Blocker</option>
+                        <option value="Right Side">Right Side</option>
+                        <option value="Opposite">Opposite</option>
+                        <option value="Libero">Libero</option>
+                        <option value="Defensive Specialist">Defensive Specialist</option>
+                    </select>
+                </div>
+                
+                <div id="upload-group-players" style="display: none;">
+                    <h5>Select players in this photo:</h5>
+                    <div id="upload-group-checklist" class="players-checklist">
+                        <!-- Players will be loaded here -->
+                    </div>
+                    <button class="staff-btn photo-btn" onclick="analyzeUploadedPhoto()">🔍 Auto-Detect Players</button>
+                    <button class="staff-btn checkin-btn" onclick="saveGroupUpload()">💾 Save Group Photo</button>
+                </div>
+            </div>
+            
+            <div id="upload-status" style="margin-top: 1rem; text-align: center; font-weight: 600;"></div>
+        </div>
+    </div>
 
-// Start new position
-function startNewPosition() {
-    resetGroupPhotoState();
-    showGroupPhotoStep('filters');
-}
-
-// Reset group camera interface
-function resetGroupCameraInterface() {
-    const previewContainer = document.getElementById('group-camera-preview');
-    const capturedImage = document.getElementById('group-captured-image');
-    const placeholder = document.getElementById('group-camera-placeholder');
-    const status = document.getElementById('group-camera-status');
-    
-    if (previewContainer) previewContainer.style.display = 'none';
-    if (capturedImage) capturedImage.style.display = 'none';
-    if (placeholder) placeholder.style.display = 'block';
-    
-    document.getElementById('start-group-camera-btn').style.display = 'inline-block';
-    document.getElementById('take-group-photo-btn').style.display = 'none';
-    document.getElementById('retake-group-btn').style.display = 'none';
-    document.getElementById('analyze-group-btn').style.display = 'none';
-    
-    if (status) {
-        status.textContent = '';
-        status.style.color = '#333';
-    }
-}
-
-// Stop group camera stream
-function stopGroupCameraStream() {
-    CameraUtils.stopStream(groupPhotoState.cameraStream);
-    groupPhotoState.cameraStream = null;
-}
-
-// View group photos (placeholder)
-function viewGroupPhotos() {
-    alert('View Group Photos feature coming soon! This will show a gallery of all group photos taken.');
-}
-
-// Photo Upload Functions
-function openUploadModal() {
-    if (!authManager.requireAuth()) return;
-    
-    const modal = document.getElementById('upload-photo-modal');
-    modal.style.display = 'block';
-    resetUploadState();
-}
-
-function closeUploadModal() {
-    const modal = document.getElementById('upload-photo-modal');
-    modal.style.display = 'none';
-    resetUploadState();
-}
-
-function resetUploadState() {
-    uploadState = {
-        photoData: null,
-        photoType: null,
-        selectedPlayers: [],
-        allPlayers: []
-    };
-    
-    document.getElementById('upload-preview').style.display = 'none';
-    document.getElementById('upload-detection').style.display = 'none';
-    document.getElementById('upload-individual').style.display = 'none';
-    document.getElementById('upload-group').style.display = 'none';
-    document.getElementById('upload-group-players').style.display = 'none';
-    document.getElementById('photo-upload-input').value = '';
-}
-
-function handlePhotoUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        uploadState.photoData = e.target.result;
-        
-        const preview = document.getElementById('upload-preview-image');
-        preview.src = uploadState.photoData;
-        document.getElementById('upload-preview').style.display = 'block';
-        document.getElementById('upload-detection').style.display = 'block';
-    };
-    reader.readAsDataURL(file);
-}
-
-function setUploadType(type) {
-    uploadState.photoType = type;
-    
-    if (type === 'individual') {
-        document.getElementById('upload-individual').style.display = 'block';
-        document.getElementById('upload-group').style.display = 'none';
-    } else {
-        document.getElementById('upload-individual').style.display = 'none';
-        document.getElementById('upload-group').style.display = 'block';
-    }
-}
-
-// Additional upload functions would go here...
-// (loadUploadPlayers, saveIndividualUpload, etc.)
-
-// Export functions for global access
-window.openGroupPhotoModal = openGroupPhotoModal;
-window.closeGroupPhotoModal = closeGroupPhotoModal;
-window.loadPositionPlayers = loadPositionPlayers;
-window.togglePlayerSelection = togglePlayerSelection;
-window.selectAllPlayers = selectAllPlayers;
-window.clearAllPlayers = clearAllPlayers;
-window.startGroupPhoto = startGroupPhoto;
-window.toggleConfirmedPlayer = toggleConfirmedPlayer;
-window.goBackToCamera = goBackToCamera;
-window.saveGroupPhoto = saveGroupPhoto;
-window.takeAnotherGroupPhoto = takeAnotherGroupPhoto;
-window.finishGroupPhotos = finishGroupPhotos;
-window.startNewPosition = startNewPosition;
-window.viewGroupPhotos = viewGroupPhotos;
-window.openUploadModal = openUploadModal;
-window.closeUploadModal = closeUploadModal;
-window.handlePhotoUpload = handlePhotoUpload;
-window.setUploadType = setUploadType;
+    <script src="js/config.js"></script>
+    <script src="js/shared-utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/group-photos.js"></script>
+</body>
+</html>
