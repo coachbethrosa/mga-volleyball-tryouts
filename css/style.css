@@ -986,6 +986,86 @@ body {
     75% { transform: translateX(5px); }
 }
 
+/* Group Photos Page Styles */
+.group-actions-menu {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.group-actions-menu h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 2rem;
+    font-size: 1.8rem;
+}
+
+.action-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.action-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 3px solid transparent;
+}
+
+.action-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    border-color: #4169E1;
+}
+
+.action-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.action-card h3 {
+    color: #333;
+    margin-bottom: 1rem;
+    font-size: 1.4rem;
+}
+
+.action-card p {
+    color: #666;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Mobile responsive for group photos */
+@media (max-width: 768px) {
+    .group-actions-menu {
+        padding: 1rem;
+    }
+    
+    .action-cards {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .action-card {
+        padding: 1.5rem;
+    }
+    
+    .action-icon {
+        font-size: 3rem;
+    }
+    
+    .action-card h3 {
+        font-size: 1.2rem;
+    }
+}
+
 /* Tablet: 2 columns */
 @media (min-width: 768px) and (max-width: 1024px) {
     .photo-grid {
