@@ -409,8 +409,9 @@ body {
     overflow: hidden;
     box-shadow: 0 3px 10px rgba(0,0,0,0.1);
     transition: transform 0.2s ease;
-    width: 380px;            /* Reverted to wider card */
-    margin: 0 auto 15px auto; /* Center the card */
+    width: 400px;            /* Desktop width */
+    max-width: calc(100vw - 20px);  /* Ensure it fits mobile screens */
+    margin: 0 auto 15px auto; 
     display: block;
 }
 
@@ -1081,7 +1082,7 @@ body {
     }
     
     .photo-container {
-        height: 280px;
+        height: 489.7px;
     }
     
     .player-info {
