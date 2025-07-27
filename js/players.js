@@ -797,3 +797,28 @@ window.sortPlayers = sortPlayers;
 window.checkInPlayer = checkInPlayer;
 window.openCameraModal = openCameraModal;
 window.closeCameraModal = closeCameraModal;
+
+// Convert comma-separated dates to checkinDates format
+function processPlayerCheckinData(player) {
+    if (player.checkinTimestamp && !player.checkinDates) {
+        player.checkinDates = {};
+        
+        // Handle comma-separated dates: "7/18, 7/12"
+        if (typeof player.checkinTimestamp === 'string' && player.checkinTimestamp.includes(',')) {
+            const dates = player.checkinTimestamp.split(',').map(d => d.trim());
+            dates.forEach(date => {
+                if (date) {
+                    player.checkinDates[date] = true;
+                }
+            });
+        }
+        // Handle single date: "7/12"
+        else if (typeof player.checkinTimestamp === 'string' && player.checkinTimestamp) {
+            player.checkinDates[player.checkinTimestamp.trim()] = true;
+        }
+        
+        // Fix hasCheckedIn
+        player.hasCheckedIn = Object.keys(player.checkinDates).length > 0;
+    }
+    return player;
+}
