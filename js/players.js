@@ -340,7 +340,9 @@ function displayPlayers(data) {
         return;
     }
     
-    const playersHtml = players.map(player => generatePlayerCard(player)).join('');
+    // Process each player's check-in data
+    const processedPlayers = players.map(player => processPlayerCheckinData(player));
+    const playersHtml = processedPlayers.map(player => generatePlayerCard(player)).join('');
     document.getElementById('players-container').innerHTML = playersHtml;
     updateSortButtons();
 }
