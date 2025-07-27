@@ -430,7 +430,7 @@ body {
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding: 350px 20px 0 20px;  /* Equal 15px margins on top, left, right */
+    padding: 35px 20px 0 20px;  /* Equal 15px margins on top, left, right */
     overflow: hidden;
 }
 
