@@ -409,16 +409,6 @@ function generatePlayerCard(player) {
                     </div>
                 </div>
 
-                ${hasPhoto ? `
-                    <div class="detail-row">
-                        <div class="detail-pair">
-                            <div class="detail-left">
-                                <span class="detail-label">Photo:</span>
-                                <span class="detail-value">✅ Submitted</span>
-                            </div>
-                        </div>
-                    </div>
-                ` : ''}
                 
                 <div class="staff-actions">
                     ${!isCheckedInToday ? `
