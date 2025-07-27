@@ -27,6 +27,7 @@
             <a href="index.html" class="nav-btn secondary">📊 Dashboard</a>
             <button class="nav-btn" onclick="openGroupPhotoModal()">📸 Group Photos</button>
             <button class="logout-btn" onclick="logout()">Logout</button>
+            <button class="nav-btn" onclick="openUploadModal()">📁 Upload Photos</button>
         </div>
     </div>
     
@@ -123,6 +124,111 @@
             </div>
             <button class="staff-btn checkin-btn" onclick="loadPositionPlayers()">📋 Load Players</button>
         </div>
+
+<div id="upload-photo-modal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+        <span class="close" onclick="closeUploadModal()">&times;</span>
+        <h3>📁 Upload & Connect Photos</h3>
+        
+        <div class="upload-section">
+            <h4>Select Photo to Upload</h4>
+            <input type="file" id="photo-upload-input" accept="image/*" onchange="handlePhotoUpload(event)">
+            <div id="upload-preview" style="margin-top: 1rem; display: none;">
+                <img id="upload-preview-image" style="max-width: 100%; max-height: 300px; border-radius: 8px;">
+            </div>
+        </div>
+        
+        <div id="upload-detection" style="display: none;">
+            <h4>Select Photo Type</h4>
+            <div class="photo-type-selection">
+                <button class="staff-btn checkin-btn" onclick="setUploadType('individual')">👤 Individual Player</button>
+                <button class="staff-btn photo-btn" onclick="setUploadType('group')">👥 Group Photo</button>
+            </div>
+        </div>
+        
+        <!-- Individual Player Selection -->
+        <div id="upload-individual" style="display: none;">
+            <h4>Select Player</h4>
+            <div class="filter-row">
+                <label>Location:</label>
+                <select id="upload-location" onchange="loadUploadPlayers()">
+                    <option value="">Choose Location</option>
+                    <option value="NORTH">North</option>
+                    <option value="SOUTH">South</option>
+                </select>
+            </div>
+            <div class="filter-row">
+                <label>Age Group:</label>
+                <select id="upload-age" onchange="loadUploadPlayers()">
+                    <option value="">Choose Age</option>
+                    <option value="13U">13U</option>
+                    <option value="14U">14U</option>
+                    <option value="15U">15U</option>
+                    <option value="16U">16U</option>
+                    <option value="17U">17U</option>
+                    <option value="18U">18U</option>
+                </select>
+            </div>
+            <div class="filter-row">
+                <label>Player:</label>
+                <select id="upload-player">
+                    <option value="">Choose Player</option>
+                </select>
+            </div>
+            <button class="staff-btn checkin-btn" onclick="saveIndividualUpload()">💾 Save Individual Photo</button>
+        </div>
+        
+        <!-- Group Photo Selection -->
+        <div id="upload-group" style="display: none;">
+            <h4>Connect to Players</h4>
+            <div class="filter-row">
+                <label>Location:</label>
+                <select id="upload-group-location" onchange="loadUploadGroupPlayers()">
+                    <option value="">Choose Location</option>
+                    <option value="NORTH">North</option>
+                    <option value="SOUTH">South</option>
+                </select>
+            </div>
+            <div class="filter-row">
+                <label>Age Group:</label>
+                <select id="upload-group-age" onchange="loadUploadGroupPlayers()">
+                    <option value="">Choose Age</option>
+                    <option value="13U">13U</option>
+                    <option value="14U">14U</option>
+                    <option value="15U">15U</option>
+                    <option value="16U">16U</option>
+                    <option value="17U">17U</option>
+                    <option value="18U">18U</option>
+                </select>
+            </div>
+            <div class="filter-row">
+                <label>Position (optional):</label>
+                <select id="upload-group-position">
+                    <option value="">All Positions</option>
+                    <option value="Setter">Setter</option>
+                    <option value="Outside Hitter">Outside Hitter</option>
+                    <option value="Middle Blocker">Middle Blocker</option>
+                    <option value="Right Side">Right Side</option>
+                    <option value="Opposite">Opposite</option>
+                    <option value="Libero">Libero</option>
+                    <option value="Defensive Specialist">Defensive Specialist</option>
+                </select>
+            </div>
+            
+            <div id="upload-group-players" style="display: none;">
+                <h5>Select players in this photo:</h5>
+                <div id="upload-group-checklist" class="players-checklist">
+                    <!-- Players will be loaded here -->
+                </div>
+                <button class="staff-btn checkin-btn" onclick="analyzeUploadedPhoto()">🔍 Auto-Detect Players</button>
+                <button class="staff-btn photo-btn" onclick="saveGroupUpload()">💾 Save Group Photo</button>
+            </div>
+        </div>
+        
+        <div id="upload-status" style="margin-top: 1rem; text-align: center; font-weight: 600;"></div>
+    </div>
+</div>
+
 
         <!-- Step 2: Player Checklist -->
         <div id="group-photo-checklist" class="group-photo-step" style="display: none;">
