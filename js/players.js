@@ -802,25 +802,41 @@ window.closeCameraModal = closeCameraModal;
 
 // Convert comma-separated dates to checkinDates format
 function processPlayerCheckinData(player) {
+    console.log('Processing player:', player.first, player.last);
+    console.log('Before processing:', {
+        checkinTimestamp: player.checkinTimestamp,
+        checkinDates: player.checkinDates,
+        hasCheckedIn: player.hasCheckedIn
+    });
+    
     if (player.checkinTimestamp && !player.checkinDates) {
         player.checkinDates = {};
         
         // Handle comma-separated dates: "7/18, 7/12"
         if (typeof player.checkinTimestamp === 'string' && player.checkinTimestamp.includes(',')) {
             const dates = player.checkinTimestamp.split(',').map(d => d.trim());
+            console.log('Split dates:', dates);
             dates.forEach(date => {
                 if (date) {
                     player.checkinDates[date] = true;
+                    console.log('Added date:', date);
                 }
             });
         }
         // Handle single date: "7/12"
         else if (typeof player.checkinTimestamp === 'string' && player.checkinTimestamp) {
             player.checkinDates[player.checkinTimestamp.trim()] = true;
+            console.log('Added single date:', player.checkinTimestamp.trim());
         }
         
         // Fix hasCheckedIn
         player.hasCheckedIn = Object.keys(player.checkinDates).length > 0;
     }
+    
+    console.log('After processing:', {
+        checkinDates: player.checkinDates,
+        hasCheckedIn: player.hasCheckedIn
+    });
+    
     return player;
 }
