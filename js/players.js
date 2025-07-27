@@ -830,3 +830,51 @@ function processPlayerCheckinData(player) {
     
     return player;
 }
+
+
+async function detectPinnyNumber(canvas, expectedPinny) {
+    const status = document.getElementById('camera-status');
+    
+    try {
+        status.textContent = 'Checking pinny number...';
+        status.style.color = '#4169E1';
+        
+        // Convert canvas to image data for OCR
+        const imageData = canvas.toDataURL('image/jpeg', 0.8);
+        
+        // Run OCR on the image
+        const { data: { text } } = await Tesseract.recognize(imageData, 'eng', {
+            logger: m => console.log(m) // Optional: log OCR progress
+        });
+        
+        console.log('OCR detected text:', text);
+        
+        // Extract numbers from the detected text
+        const numbers = text.match(/\d+/g) || [];
+        console.log('Detected numbers:', numbers);
+        
+        // Check if expected pinny number is found
+        const expectedStr = expectedPinny.toString();
+        const pinnyFound = numbers.some(num => num === expectedStr);
+        
+        if (pinnyFound) {
+            status.textContent = `✅ Pinny #${expectedPinny} detected! Photo looks good.`;
+            status.style.color = '#28a745';
+            return { success: true, message: 'Pinny number confirmed' };
+        } else if (numbers.length === 0) {
+            status.textContent = '⚠️ No pinny number detected. Please make sure your pinny is visible and try again.';
+            status.style.color = '#f39c12';
+            return { success: false, message: 'No numbers detected' };
+        } else {
+            status.textContent = `⚠️ Wrong pinny detected (found: ${numbers.join(', ')}). Expected: #${expectedPinny}`;
+            status.style.color = '#dc3545';
+            return { success: false, message: 'Wrong pinny number' };
+        }
+        
+    } catch (error) {
+        console.error('OCR Error:', error);
+        status.textContent = 'Could not analyze pinny number. Photo will be submitted as-is.';
+        status.style.color = '#666';
+        return { success: true, message: 'OCR failed, proceeding anyway' };
+    }
+}
