@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Group Photos - MGA Volleyball Tryouts</title>
+    <link rel="icon" type="image/png" href="https://mgavolleyball.com/wp-content/uploads/2023/07/mga-logo-277x300.png">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <img src="https://mgavolleyball.com/wp-content/uploads/2023/07/mga-logo-277x300.png" 
+                 alt="MGA Volleyball Logo" 
+                 class="logo">
+        </div>
+        
+        <div class="header-center">
+            <h1 id="page-title">📸 Group Photos</h1>
+            <div class="subtitle">Position Team Photos</div>
+        </div>
+        
+        <div class="header-right">
+            <a href="index.html" class="nav-btn">📊 Dashboard</a>
+            <a href="players.html" class="nav-btn">👤 Player Photos</a>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+    
+    <!-- Main Actions Menu -->
+    <div class="container">
+        <div class="group-actions-menu">
+            <h2>Choose an Option</h2>
+            <div class="action-cards">
+                <div class="action-card" onclick="showComingSoon('Take Group Photos')">
+                    <div class="action-icon">📸</div>
+                    <h3>Take Group Photos</h3>
+                    <p>Position players by location, age, and position. Take photos with automatic player detection.</p>
+                </div>
+                
+                <div class="action-card" onclick="showComingSoon('Upload Photos')">
+                    <div class="action-icon">📁</div>
+                    <h3>Upload Existing Photos</h3>
+                    <p>Upload photos taken outside the system and connect them to the correct players.</p>
+                </div>
+                
+                <div class="action-card" onclick="showComingSoon('View Photos')">
+                    <div class="action-icon">🖼️</div>
+                    <h3>View All Group Photos</h3>
+                    <p>Browse and manage all group photos that have been taken and uploaded.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Coming Soon Modal -->
+    <div id="coming-soon-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px; text-align: center;">
+            <span class="close" onclick="closeComingSoon()">&times;</span>
+            <div style="padding: 2rem;">
+                <div style="font-size: 4rem; margin-bottom: 1rem;">🚧</div>
+                <h3 id="coming-soon-title">Feature Coming Soon!</h3>
+                <p style="color: #666; margin: 1rem 0;">This feature is currently being developed and will be available in the next update.</p>
+                <button class="staff-btn photo-btn" onclick="closeComingSoon()" style="margin-top: 1rem;">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // Simple placeholder functionality for group photos page
+        
+        // Initialize group photos page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Group Photos page loaded');
+            
+            // Wait for auth
+            waitForAuth().then(() => {
+                console.log('Group Photos auth complete');
+                updatePageTitle();
+            });
+        });
+
+        // Wait for authentication
+        async function waitForAuth() {
+            return new Promise((resolve) => {
+                const checkAuth = () => {
+                    if (window.authManager) {
+                        if (authManager.isLoggedIn()) {
+                            console.log('Auth check passed');
+                            resolve();
+                        } else {
+                            console.log('Auth manager exists but not logged in, waiting...');
+                            setTimeout(checkAuth, 200);
+                        }
+                    } else {
+                        console.log('Auth manager not ready, waiting...');
+                        setTimeout(checkAuth, 100);
+                    }
+                };
+                checkAuth();
+            });
+        }
+
+        // Update page title
+        function updatePageTitle() {
+            const titleElement = document.getElementById('page-title');
+            if (titleElement) {
+                titleElement.textContent = '📸 Group Photos';
+            }
+        }
+
+        // Show coming soon modal
+        function showComingSoon(featureName) {
+            const modal = document.getElementById('coming-soon-modal');
+            const title = document.getElementById('coming-soon-title');
+            
+            title.textContent = `${featureName} - Coming Soon!`;
+            modal.style.display = 'block';
+        }
+
+        // Close coming soon modal
+        function closeComingSoon() {
+            const modal = document.getElementById('coming-soon-modal');
+            modal.style.display = 'none';
+        }
+
+        // Export functions for global access
+        window.showComingSoon = showComingSoon;
+        window.closeComingSoon = closeComingSoon;
+    </script>
+</body>
+</html>
