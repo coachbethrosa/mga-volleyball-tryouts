@@ -263,9 +263,9 @@ body {
     flex-shrink: 0;
 }
 
-.status-good { background: #DC143C; }
-.status-warning { background: #f39c12; }
-.status-critical { background: #6c757d; }
+.status-good { background: #4169E1; }
+.status-warning { background: #8B5A96; }
+.status-critical { background: #DC143C; }
 
 .last-updated {
     text-align: center;
@@ -395,7 +395,7 @@ body {
 }
 
 .sort-btn.active {
-    background: #DC143C;
+    background: #8B5A96;
 }
 
 /* MOBILE-FIRST: Photo grid - single column on mobile */
@@ -1353,6 +1353,18 @@ body {
     flex: 1;
 }
 
+.upload-group-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+.upload-group-actions .staff-btn {
+    flex: 1;
+    min-width: 140px;
+}
+
 /* Mobile responsive for group photos */
 @media (max-width: 768px) {
     .group-actions-menu {
@@ -1442,7 +1454,11 @@ body {
     }
     
     .nav-tabs {
-        top: 60px; /* Adjusted for smaller mobile header */
+        top: 65px; /* Adjusted for smaller mobile header */
+    }
+    
+    .refresh-info {
+        top: 105px; /* Adjusted for mobile */
     }
     
     .header-center h1 { 
@@ -1521,7 +1537,11 @@ body {
     }
     
     .nav-tabs {
-        top: 55px; /* Adjusted for even smaller header */
+        top: 60px; /* Adjusted for even smaller header */
+    }
+    
+    .refresh-info {
+        top: 100px; /* Adjusted for small mobile */
     }
     
     .header-right {
