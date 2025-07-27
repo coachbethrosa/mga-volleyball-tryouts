@@ -50,7 +50,7 @@ function setupEventListeners() {
 function updatePageTitle() {
     const titleElement = document.getElementById('page-title');
     if (titleElement) {
-        titleElement.textContent = '📸 Group Photos';
+        titleElement.textContent = '👥 Group Photos';
     }
 }
 
