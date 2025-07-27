@@ -362,14 +362,10 @@ function generatePlayerCard(player) {
         <div class="player-card ${isCheckedInToday ? 'checked-in-today' : ''}" data-player-id="${player.playerID}">
             <div class="photo-container">
                 ${hasPhoto 
-                    ? `<img src="${player.selfieUrl}" alt="Player Photo" class="player-photo">
-                       <div class="photo-status">✅ Photo</div>`
+                    ? `<img src="${player.selfieUrl}" alt="Player Photo" class="player-photo">`
                     : `<div class="no-photo" onclick="openCameraModal(${playerJson})">📷<br><small>Click to take photo</small></div>`
                 }
-                <div class="completion-indicator ${completionStatus.cssClass}">
-                    ${completionStatus.completed}/${completionStatus.total}
                 </div>
-            </div>
             
             <div class="player-info">
                 <div class="player-name-row">
