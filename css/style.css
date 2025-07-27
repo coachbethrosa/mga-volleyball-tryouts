@@ -47,7 +47,7 @@ body {
 .header-right {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
     justify-self: end;
 }
 
@@ -72,51 +72,53 @@ body {
     margin: 2px 0 0 0;
 }
 
-/* UPDATED Consistent Button Sizing */
-.view-players-btn, .nav-btn, .logout-btn {
-    background: #DC143C;
-    color: white;
-    padding: 8px 12px;
-    border: none;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(220, 20, 60, 0.3);
-    min-height: 36px;
+/* UPDATED Consistent Button Styling */
+.nav-btn {
+    background: #4169E1 !important;
+    color: white !important;
+    padding: 8px 16px !important;
+    border: none !important;
+    border-radius: 6px !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 8px rgba(65, 105, 225, 0.3) !important;
+    min-height: 36px !important;
+    white-space: nowrap !important;
 }
 
-.view-players-btn:hover, .nav-btn:hover, .logout-btn:hover {
-    background: #B91C1C;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(220, 20, 60, 0.4);
-    text-decoration: none;
-    color: white;
-}
-
-.nav-btn.secondary {
-    background: #4169E1;
-    box-shadow: 0 2px 8px rgba(65, 105, 225, 0.3);
-}
-
-.nav-btn.secondary:hover {
-    background: #3151c1;
-    box-shadow: 0 4px 12px rgba(65, 105, 225, 0.4);
+.nav-btn:hover {
+    background: #3151c1 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(65, 105, 225, 0.4) !important;
+    text-decoration: none !important;
+    color: white !important;
 }
 
 .logout-btn {
-    background: #e74c3c;
-    box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+    background: #dc3545 !important;
+    color: white !important;
+    padding: 8px 16px !important;
+    border: none !important;
+    border-radius: 6px !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3) !important;
+    min-height: 36px !important;
+    white-space: nowrap !important;
 }
 
 .logout-btn:hover {
-    background: #c0392b;
-    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+    background: #c82333 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4) !important;
 }
 
 /* Dashboard Styles - Your Original Design */
@@ -409,9 +411,9 @@ body {
     overflow: hidden;
     box-shadow: 0 3px 10px rgba(0,0,0,0.1);
     transition: transform 0.2s ease;
-    width: 400px;            /* Desktop width */
-    max-width: calc(100vw - 20px);  /* Ensure it fits mobile screens */
-    margin: 0 auto 15px auto; 
+    width: 400px;
+    max-width: calc(100vw - 20px);
+    margin: 0 auto 15px auto;
     display: block;
 }
 
@@ -425,7 +427,7 @@ body {
 
 .photo-container {
     position: relative;
-    height: 489.7px;        /* 439.7px photo + 25px top + 25px bottom padding */
+    height: 489.7px;
     width: 100%;
     background: #f8f9fa;
     display: flex;
@@ -434,10 +436,11 @@ body {
     padding: 25px 25px 25px 25px;
     overflow: hidden;
 }
+
 .player-photo {
-    width: 100%;             /* Fill available width */
-    height: auto;            /* Let height be determined by aspect ratio */
-    object-fit: cover;       /* Or remove this line entirely */
+    width: 100%;
+    height: auto;
+    object-fit: cover;
     object-position: center top;
 }
 
@@ -453,8 +456,6 @@ body {
     color: #4169E1;
     transform: scale(1.05);
 }
-
-
 
 .player-info {
     padding: 15px;
@@ -560,36 +561,64 @@ body {
     padding: 12px 15px;
     border: none;
     border-radius: 8px;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
     text-decoration: none;
     text-align: center;
     min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
 
-.checkin-btn {
+/* Primary Action - Check-in */
+.staff-btn.checkin-btn, 
+.staff-btn.checkin-today-btn {
     background: #28a745;
     color: white;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
 }
 
-.checkin-btn:hover:not(.disabled) {
+.staff-btn.checkin-btn:hover:not(.disabled), 
+.staff-btn.checkin-today-btn:hover:not(.disabled) {
     background: #218838;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
 }
 
-.checkin-btn.disabled {
+.staff-btn.checkin-btn.disabled {
     background: #6c757d;
     cursor: not-allowed;
+    transform: none;
 }
 
-.photo-btn {
-    background: #007bff;
+/* Secondary Action - Photo */
+.staff-btn.photo-btn {
+    background: #4169E1;
     color: white;
+    box-shadow: 0 2px 8px rgba(65, 105, 225, 0.3);
 }
 
-.photo-btn:hover {
-    background: #0056b3;
+.staff-btn.photo-btn:hover {
+    background: #3151c1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(65, 105, 225, 0.4);
+}
+
+/* Tertiary Action - Cancel/Secondary */
+.staff-btn.secondary-btn {
+    background: #6c757d;
+    color: white;
+    box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
+}
+
+.staff-btn.secondary-btn:hover {
+    background: #545b62;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
 }
 
 /* NEW Multi-Day Check-in Date Chips */
@@ -619,7 +648,7 @@ body {
     text-align: center;
 }
 
-/* Completed check-in - Green */
+/* Completed check-in - Blue */
 .checkin-chip.completed {
     background: #4169E1;
     color: white;
@@ -657,16 +686,6 @@ body {
     background: linear-gradient(to right, #f8fff9, white);
 }
 
-/* Updated check-in button styling */
-.checkin-today-btn {
-    background: #2ecc71;
-    color: white;
-}
-
-.checkin-today-btn:hover:not(.disabled) {
-    background: #27ae60;
-}
-
 .checked-in-today-msg {
     color: #27ae60;
     font-size: 13px;
@@ -676,7 +695,6 @@ body {
     border-radius: 4px;
     text-align: center;
 }
-
 
 /* Pulse animation for today's chip */
 @keyframes pulse {
@@ -790,6 +808,54 @@ body {
 
 .close:hover {
     color: #000;
+}
+
+/* Camera Guide Overlay */
+.camera-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.pose-guide {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 80%;
+    border: 3px dashed #fff;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.1);
+}
+
+.pose-guide::before {
+    content: "👤";
+    position: absolute;
+    top: 15%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 3rem;
+    color: rgba(255,255,255,0.8);
+}
+
+.pose-guide::after {
+    content: "Position head and torso here\AMake sure jersey number is visible";
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    font-size: 0.8rem;
+    text-align: center;
+    white-space: pre-line;
+    background: rgba(0,0,0,0.7);
+    padding: 5px 10px;
+    border-radius: 5px;
 }
 
 /* Login Modal Styles */
@@ -939,13 +1005,13 @@ body {
 @media (min-width: 1025px) {
     .photo-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
         gap: 25px;
         padding: 0 20px;
     }
     
     .photo-container {
-        height: 320px;
+        height: 489.7px;
     }
     
     .player-card {
@@ -969,10 +1035,16 @@ body {
         font-size: 0.8rem; 
     }
     
-    .view-players-btn, .nav-btn, .logout-btn { 
-        font-size: 0.75rem; 
-        padding: 6px 10px;
-        min-height: 32px;
+    .header-right {
+        flex-direction: column;
+        gap: 8px;
+        align-items: stretch;
+    }
+    
+    .nav-btn, .logout-btn {
+        font-size: 0.8rem !important;
+        padding: 6px 12px !important;
+        min-height: 32px !important;
     }
     
     .stat-number { 
@@ -1018,6 +1090,16 @@ body {
         padding: 3px 6px;
         font-size: 10px;
     }
+    
+    .staff-btn {
+        font-size: 0.85rem;
+        padding: 10px 12px;
+        min-height: 40px;
+    }
+    
+    .photo-container {
+        height: 489.7px !important;
+    }
 }
 
 /* Extra small phones */
@@ -1027,14 +1109,13 @@ body {
     }
     
     .header-right {
-        flex-direction: column;
-        gap: 4px;
+        gap: 6px;
     }
     
-    .view-players-btn, .nav-btn, .logout-btn {
-        font-size: 0.7rem;
-        padding: 5px 8px;
-        min-height: 28px;
+    .nav-btn, .logout-btn {
+        font-size: 0.75rem !important;
+        padding: 5px 10px !important;
+        min-height: 30px !important;
     }
 
     .photo-grid {
@@ -1043,7 +1124,7 @@ body {
     }
     
     .photo-container {
-        height: 489.7px;
+        height: 489.7px !important;
     }
     
     .player-info {
@@ -1065,362 +1146,5 @@ body {
     
     .detail-value {
         font-size: 0.8rem;
-    }
-}
-
-.camera-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    pointer-events: none;
-    z-index: 10;
-}
-
-.pose-guide {
-    position: absolute;
-    top: 10%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60%;
-    height: 80%;
-    border: 3px dashed #fff;
-    border-radius: 20px;
-    background: rgba(255,255,255,0.1);
-}
-
-.pose-guide::before {
-    content: "👤";
-    position: absolute;
-    top: 15%;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 3rem;
-    color: rgba(255,255,255,0.8);
-}
-
-.pose-guide::after {
-    content: "Position head and torso here\nMake sure pinny number is visible";
-    position: absolute;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: white;
-    font-size: 0.8rem;
-    text-align: center;
-    white-space: pre-line;
-    background: rgba(0,0,0,0.7);
-    padding: 5px 10px;
-    border-radius: 5px;
-}
-
-/* Group Photo Modal Styles */
-.group-photo-step {
-    margin-bottom: 2rem;
-}
-
-.filter-row {
-    display: flex;
-    align-items: center;
-    margin-bottom: 1rem;
-    gap: 1rem;
-}
-
-.filter-row label {
-    min-width: 100px;
-    font-weight: 600;
-}
-
-.filter-row select {
-    flex: 1;
-    padding: 8px 12px;
-    border: 2px solid #ddd;
-    border-radius: 6px;
-    font-size: 14px;
-}
-
-.filter-row select:focus {
-    outline: none;
-    border-color: #4169E1;
-    box-shadow: 0 0 0 3px rgba(65, 105, 225, 0.1);
-}
-
-.checklist-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid #ecf0f1;
-}
-
-.checklist-stats {
-    background: #4169E1;
-    color: white;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 0.9rem;
-    font-weight: 600;
-}
-
-.players-checklist {
-    max-height: 300px;
-    overflow-y: auto;
-    border: 2px solid #ecf0f1;
-    border-radius: 8px;
-    padding: 1rem;
-    margin-bottom: 1rem;
-}
-
-.player-checkbox-item {
-    display: flex;
-    align-items: center;
-    padding: 8px 0;
-    border-bottom: 1px solid #ecf0f1;
-    gap: 12px;
-}
-
-.player-checkbox-item:last-child {
-    border-bottom: none;
-}
-
-.player-checkbox-item input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-}
-
-.player-checkbox-item label {
-    flex: 1;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.player-pinny {
-    background: #4169E1;
-    color: white;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    min-width: 30px;
-    text-align: center;
-}
-
-.player-name {
-    font-weight: 600;
-}
-
-.player-school {
-    color: #666;
-    font-size: 0.9rem;
-}
-
-.checklist-actions {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-}
-
-.checklist-actions .staff-btn {
-    flex: 1;
-    min-width: 120px;
-}
-
-/* Group Camera Styles */
-.group-camera-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    pointer-events: none;
-    z-index: 10;
-}
-
-.group-pose-guide {
-    position: absolute;
-    top: 5%;
-    left: 10%;
-    right: 10%;
-    height: 80%;
-    border: 3px dashed #fff;
-    border-radius: 20px;
-    background: rgba(255,255,255,0.1);
-}
-
-.group-pose-guide::before {
-    content: "👥";
-    position: absolute;
-    top: 15%;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 4rem;
-    color: rgba(255,255,255,0.8);
-}
-
-.group-pose-guide::after {
-    content: "Line up players by pinny number\AMake sure all pinny numbers are visible";
-    position: absolute;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: white;
-    font-size: 0.9rem;
-    text-align: center;
-    white-space: pre-line;
-    background: rgba(0,0,0,0.7);
-    padding: 8px 15px;
-    border-radius: 8px;
-}
-
-.expected-players {
-    background: #f8f9fa;
-    padding: 1rem;
-    border-radius: 8px;
-    margin: 1rem 0;
-}
-
-.expected-players h5 {
-    margin: 0 0 0.5rem 0;
-    color: #333;
-}
-
-.expected-player-chip {
-    display: inline-block;
-    background: #4169E1;
-    color: white;
-    padding: 4px 10px;
-    border-radius: 12px;
-    margin: 2px;
-    font-size: 0.8rem;
-    font-weight: 600;
-}
-
-.group-camera-controls {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-    margin-top: 1rem;
-}
-
-.group-camera-controls .staff-btn {
-    flex: 1;
-    min-width: 140px;
-}
-
-/* Confirm Players Styles */
-.detected-vs-expected {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-    margin-bottom: 2rem;
-}
-
-.detected-numbers, .confirm-checklist {
-    background: #f8f9fa;
-    padding: 1rem;
-    border-radius: 8px;
-}
-
-.detected-numbers h5, .confirm-checklist h5 {
-    margin: 0 0 1rem 0;
-    color: #333;
-}
-
-.detected-number-chip {
-    display: inline-block;
-    padding: 6px 12px;
-    border-radius: 12px;
-    margin: 2px;
-    font-size: 0.9rem;
-    font-weight: 600;
-}
-
-.detected-number-chip.found {
-    background: #28a745;
-    color: white;
-}
-
-.detected-number-chip.unexpected {
-    background: #f39c12;
-    color: white;
-}
-
-.detected-number-chip.missing {
-    background: #dc3545;
-    color: white;
-}
-
-.confirm-player-item {
-    display: flex;
-    align-items: center;
-    padding: 6px 0;
-    gap: 8px;
-}
-
-.confirm-player-item input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-}
-
-.confirm-actions {
-    display: flex;
-    gap: 1rem;
-}
-
-.confirm-actions .staff-btn {
-    flex: 1;
-}
-
-/* Results Styles */
-.results-summary {
-    background: #e8f5e8;
-    border: 2px solid #28a745;
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    text-align: center;
-}
-
-.results-actions {
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-}
-
-.results-actions .staff-btn {
-    flex: 1;
-    min-width: 140px;
-}
-
-/* Mobile responsive */
-@media (max-width: 768px) {
-    .detected-vs-expected {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-    
-    .filter-row {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .filter-row label {
-        min-width: auto;
-    }
-    
-    .checklist-actions, .group-camera-controls, .confirm-actions, .results-actions {
-        flex-direction: column;
-    }
-    
-    .checklist-actions .staff-btn, 
-    .group-camera-controls .staff-btn, 
-    .confirm-actions .staff-btn, 
-    .results-actions .staff-btn {
-        min-width: auto;
     }
 }
