@@ -997,9 +997,10 @@ body {
 
 .group-actions-menu h2 {
     text-align: center;
-    color: #333;
+    color: white;
     margin-bottom: 2rem;
     font-size: 1.8rem;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .action-cards {
