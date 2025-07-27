@@ -1067,3 +1067,50 @@ body {
         font-size: 0.8rem;
     }
 }
+
+.camera-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.pose-guide {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 80%;
+    border: 3px dashed #fff;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.1);
+}
+
+.pose-guide::before {
+    content: "👤";
+    position: absolute;
+    top: 15%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 3rem;
+    color: rgba(255,255,255,0.8);
+}
+
+.pose-guide::after {
+    content: "Position head and torso here\nMake sure pinny number is visible";
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    font-size: 0.8rem;
+    text-align: center;
+    white-space: pre-line;
+    background: rgba(0,0,0,0.7);
+    padding: 5px 10px;
+    border-radius: 5px;
+}
