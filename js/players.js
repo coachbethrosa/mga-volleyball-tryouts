@@ -607,6 +607,7 @@ function setupCameraControls() {
 }
 
 async function startCamera() {
+    const previewContainer = document.getElementById('camera-preview-container');
     const video = document.getElementById('camera-video');
     const placeholder = document.getElementById('camera-placeholder');
     const status = document.getElementById('camera-status');
@@ -624,13 +625,13 @@ async function startCamera() {
         });
         
         video.srcObject = cameraStream;
-        video.style.display = 'block';
+        previewContainer.style.display = 'block';  // Show the container with overlay
         placeholder.style.display = 'none';
         
         document.getElementById('start-camera-btn').style.display = 'none';
         document.getElementById('take-photo-btn').style.display = 'inline-block';
         
-        status.textContent = 'Camera ready! Position yourself and click "Take Photo"';
+        status.textContent = 'Camera ready! Position yourself in the guide and click "Take Photo"';
         status.style.color = '#28a745';
         
     } catch (error) {
@@ -639,7 +640,6 @@ async function startCamera() {
         status.style.color = '#dc3545';
     }
 }
-
 function takePhoto() {
     const video = document.getElementById('camera-video');
     const canvas = document.getElementById('camera-canvas');
