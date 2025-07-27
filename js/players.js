@@ -452,7 +452,8 @@ function renderCheckinChips(player, todayDate) {
         const isPast = isPastDate(date);
         
         let chipClass = 'checkin-chip';
-        let chipText = `${dateInfo.description} ${date}`;
+        let shortDescription = dateInfo.description.replace(' Date', 's');
+        let chipText = `${shortDescription} ${date}`;
         
         if (isCheckedIn) {
             chipClass += ' completed';
