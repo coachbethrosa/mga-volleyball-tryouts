@@ -1490,3 +1490,261 @@ document.addEventListener('DOMContentLoaded', function() {
     if (retakeGroupBtn) retakeGroupBtn.addEventListener('click', retakeGroupPhoto);
     if (analyzeGroupBtn) analyzeGroupBtn.addEventListener('click', analyzeGroupPhoto);
 });
+
+<script>
+// Photo Upload Functionality
+let uploadState = {
+    photoData: null,
+    photoType: null,
+    selectedPlayers: []
+};
+
+function openUploadModal() {
+    if (!authManager.requireAuth()) return;
+    
+    const modal = document.getElementById('upload-photo-modal');
+    modal.style.display = 'block';
+    resetUploadState();
+}
+
+function closeUploadModal() {
+    const modal = document.getElementById('upload-photo-modal');
+    modal.style.display = 'none';
+    resetUploadState();
+}
+
+function resetUploadState() {
+    uploadState = {
+        photoData: null,
+        photoType: null,
+        selectedPlayers: []
+    };
+    
+    document.getElementById('upload-preview').style.display = 'none';
+    document.getElementById('upload-detection').style.display = 'none';
+    document.getElementById('upload-individual').style.display = 'none';
+    document.getElementById('upload-group').style.display = 'none';
+    document.getElementById('upload-group-players').style.display = 'none';
+    document.getElementById('photo-upload-input').value = '';
+}
+
+function handlePhotoUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        uploadState.photoData = e.target.result;
+        
+        const preview = document.getElementById('upload-preview-image');
+        preview.src = uploadState.photoData;
+        document.getElementById('upload-preview').style.display = 'block';
+        document.getElementById('upload-detection').style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+}
+
+function setUploadType(type) {
+    uploadState.photoType = type;
+    
+    if (type === 'individual') {
+        document.getElementById('upload-individual').style.display = 'block';
+        document.getElementById('upload-group').style.display = 'none';
+    } else {
+        document.getElementById('upload-individual').style.display = 'none';
+        document.getElementById('upload-group').style.display = 'block';
+    }
+}
+
+async function loadUploadPlayers() {
+    const location = document.getElementById('upload-location').value;
+    const age = document.getElementById('upload-age').value;
+    
+    if (!location || !age) return;
+    
+    try {
+        const data = await window.mgaAPI.getPlayers(location, age, 'name');
+        const playerSelect = document.getElementById('upload-player');
+        
+        playerSelect.innerHTML = '<option value="">Choose Player</option>';
+        data.players.forEach(player => {
+            const option = document.createElement('option');
+            option.value = player.playerID;
+            option.textContent = `#${player.pinny || 'N/A'} ${player.first} ${player.last}`;
+            playerSelect.appendChild(option);
+        });
+        
+    } catch (error) {
+        console.error('Error loading players:', error);
+    }
+}
+
+async function loadUploadGroupPlayers() {
+    const location = document.getElementById('upload-group-location').value;
+    const age = document.getElementById('upload-group-age').value;
+    
+    if (!location || !age) return;
+    
+    try {
+        const data = await window.mgaAPI.getPlayers(location, age, 'pinny');
+        const position = document.getElementById('upload-group-position').value;
+        
+        let players = data.players;
+        if (position) {
+            players = players.filter(p => p.position === position);
+        }
+        
+        const container = document.getElementById('upload-group-checklist');
+        const html = players.map(player => `
+            <div class="player-checkbox-item">
+                <input type="checkbox" 
+                       id="upload-player-${player.playerID}" 
+                       onchange="toggleUploadPlayer('${player.playerID}')">
+                <label for="upload-player-${player.playerID}">
+                    <span class="player-pinny">#${player.pinny || 'N/A'}</span>
+                    <span class="player-name">${player.last}, ${player.first}</span>
+                    <span class="player-school">${player.school || 'N/A'}</span>
+                </label>
+            </div>
+        `).join('');
+        
+        container.innerHTML = html;
+        document.getElementById('upload-group-players').style.display = 'block';
+        
+        // Store players for reference
+        uploadState.allPlayers = players;
+        uploadState.selectedPlayers = [];
+        
+    } catch (error) {
+        console.error('Error loading group players:', error);
+    }
+}
+
+function toggleUploadPlayer(playerID) {
+    const player = uploadState.allPlayers.find(p => p.playerID === playerID);
+    if (!player) return;
+    
+    const index = uploadState.selectedPlayers.findIndex(p => p.playerID === playerID);
+    if (index > -1) {
+        uploadState.selectedPlayers.splice(index, 1);
+    } else {
+        uploadState.selectedPlayers.push(player);
+    }
+}
+
+async function analyzeUploadedPhoto() {
+    if (!uploadState.photoData) return;
+    
+    const status = document.getElementById('upload-status');
+    status.textContent = 'Analyzing photo for pinny numbers...';
+    status.style.color = '#4169E1';
+    
+    try {
+        const { data: { text } } = await Tesseract.recognize(uploadState.photoData, 'eng');
+        const detectedNumbers = text.match(/\d+/g) || [];
+        
+        // Auto-select players based on detected numbers
+        uploadState.allPlayers.forEach(player => {
+            const checkbox = document.getElementById(`upload-player-${player.playerID}`);
+            if (checkbox && detectedNumbers.includes(player.pinny)) {
+                checkbox.checked = true;
+                if (!uploadState.selectedPlayers.some(p => p.playerID === player.playerID)) {
+                    uploadState.selectedPlayers.push(player);
+                }
+            }
+        });
+        
+        status.textContent = `Detected numbers: ${detectedNumbers.join(', ')}. Please verify selections.`;
+        status.style.color = '#28a745';
+        
+    } catch (error) {
+        status.textContent = 'Could not analyze photo. Please select players manually.';
+        status.style.color = '#f39c12';
+    }
+}
+
+async function saveIndividualUpload() {
+    const playerID = document.getElementById('upload-player').value;
+    
+    if (!playerID || !uploadState.photoData) {
+        alert('Please select a player and upload a photo');
+        return;
+    }
+    
+    try {
+        const status = document.getElementById('upload-status');
+        status.textContent = 'Saving individual photo...';
+        status.style.color = '#4169E1';
+        
+        const result = await submitPhotoToAPI(uploadState.photoData, { playerID });
+        
+        if (result.success) {
+            status.textContent = '✅ Individual photo saved successfully!';
+            status.style.color = '#28a745';
+            setTimeout(() => closeUploadModal(), 2000);
+        } else {
+            throw new Error(result.error || 'Failed to save photo');
+        }
+        
+    } catch (error) {
+        const status = document.getElementById('upload-status');
+        status.textContent = `❌ Error: ${error.message}`;
+        status.style.color = '#dc3545';
+    }
+}
+
+async function saveGroupUpload() {
+    if (uploadState.selectedPlayers.length === 0 || !uploadState.photoData) {
+        alert('Please select players and upload a photo');
+        return;
+    }
+    
+    try {
+        const status = document.getElementById('upload-status');
+        status.textContent = 'Saving group photo...';
+        status.style.color = '#4169E1';
+        
+        const metadata = {
+            type: 'group',
+            location: document.getElementById('upload-group-location').value,
+            age: document.getElementById('upload-group-age').value,
+            position: document.getElementById('upload-group-position').value || 'Mixed',
+            players: uploadState.selectedPlayers.map(p => ({
+                playerID: p.playerID,
+                pinny: p.pinny,
+                name: `${p.first} ${p.last}`
+            })),
+            photoNumber: 1,
+            timestamp: new Date().toISOString(),
+            source: 'upload'
+        };
+        
+        const result = await window.mgaAPI.saveGroupPhoto(uploadState.photoData, metadata);
+        
+        if (result.success) {
+            status.textContent = '✅ Group photo saved successfully!';
+            status.style.color = '#28a745';
+            setTimeout(() => closeUploadModal(), 2000);
+        } else {
+            throw new Error(result.error || 'Failed to save photo');
+        }
+        
+    } catch (error) {
+        const status = document.getElementById('upload-status');
+        status.textContent = `❌ Error: ${error.message}`;
+        status.style.color = '#dc3545';
+    }
+}
+
+// Export functions
+window.openUploadModal = openUploadModal;
+window.closeUploadModal = closeUploadModal;
+window.handlePhotoUpload = handlePhotoUpload;
+window.setUploadType = setUploadType;
+window.loadUploadPlayers = loadUploadPlayers;
+window.loadUploadGroupPlayers = loadUploadGroupPlayers;
+window.toggleUploadPlayer = toggleUploadPlayer;
+window.analyzeUploadedPhoto = analyzeUploadedPhoto;
+window.saveIndividualUpload = saveIndividualUpload;
+window.saveGroupUpload = saveGroupUpload;
+</script>
