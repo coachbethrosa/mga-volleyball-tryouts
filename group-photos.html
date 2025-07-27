@@ -36,19 +36,19 @@
         <div class="group-actions-menu">
             <h2>Choose an Option</h2>
             <div class="action-cards">
-                <div class="action-card" onclick="showComingSoon('Take Group Photos')">
+                <div class="action-card" onclick="openGroupPhotoModal()">
                     <div class="action-icon">📸</div>
                     <h3>Take Group Photos</h3>
                     <p>Position players by location, age, and position. Take photos with automatic player detection.</p>
                 </div>
                 
-                <div class="action-card" onclick="showComingSoon('Upload Photos')">
+                <div class="action-card" onclick="openUploadModal()">
                     <div class="action-icon">📁</div>
                     <h3>Upload Existing Photos</h3>
                     <p>Upload photos taken outside the system and connect them to the correct players.</p>
                 </div>
                 
-                <div class="action-card" onclick="showComingSoon('View Photos')">
+                <div class="action-card" onclick="viewGroupPhotos()">
                     <div class="action-icon">🖼️</div>
                     <h3>View All Group Photos</h3>
                     <p>Browse and manage all group photos that have been taken and uploaded.</p>
@@ -57,83 +57,244 @@
         </div>
     </div>
 
-    <!-- Coming Soon Modal -->
-    <div id="coming-soon-modal" class="modal">
-        <div class="modal-content" style="max-width: 500px; text-align: center;">
-            <span class="close" onclick="closeComingSoon()">&times;</span>
-            <div style="padding: 2rem;">
-                <div style="font-size: 4rem; margin-bottom: 1rem;">🚧</div>
-                <h3 id="coming-soon-title">Feature Coming Soon!</h3>
-                <p style="color: #666; margin: 1rem 0;">This feature is currently being developed and will be available in the next update.</p>
-                <button class="staff-btn photo-btn" onclick="closeComingSoon()" style="margin-top: 1rem;">Got it!</button>
+    <!-- Group Photo Modal -->
+    <div id="group-photo-modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close" onclick="closeGroupPhotoModal()">&times;</span>
+            <h3 id="group-photo-title">📸 Group Photos by Position</h3>
+            
+            <!-- Step 1: Select Filters -->
+            <div id="group-photo-filters" class="group-photo-step">
+                <h4>Select Position Group</h4>
+                <div class="filter-row">
+                    <label>Location:</label>
+                    <select id="group-location">
+                        <option value="">Choose Location</option>
+                        <option value="NORTH">North</option>
+                        <option value="SOUTH">South</option>
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <label>Age Group:</label>
+                    <select id="group-age">
+                        <option value="">Choose Age</option>
+                        <option value="13U">13U</option>
+                        <option value="14U">14U</option>
+                        <option value="15U">15U</option>
+                        <option value="16U">16U</option>
+                        <option value="17U">17U</option>
+                        <option value="18U">18U</option>
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <label>Position:</label>
+                    <select id="group-position">
+                        <option value="">Choose Position</option>
+                        <option value="Setter">Setter</option>
+                        <option value="Outside Hitter">Outside Hitter</option>
+                        <option value="Middle Blocker">Middle Blocker</option>
+                        <option value="Right Side">Right Side</option>
+                        <option value="Opposite">Opposite</option>
+                        <option value="Libero">Libero</option>
+                        <option value="Defensive Specialist">Defensive Specialist</option>
+                    </select>
+                </div>
+                <button class="staff-btn checkin-btn" onclick="loadPositionPlayers()">📋 Load Players</button>
             </div>
+
+            <!-- Step 2: Player Checklist -->
+            <div id="group-photo-checklist" class="group-photo-step" style="display: none;">
+                <div class="checklist-header">
+                    <h4 id="position-title">Position Players</h4>
+                    <div class="checklist-stats">
+                        <span id="players-selected">0</span> of <span id="players-total">0</span> selected
+                    </div>
+                </div>
+                <div id="players-checklist" class="players-checklist">
+                    <!-- Players will be populated here -->
+                </div>
+                <div class="checklist-actions">
+                    <button class="staff-btn secondary-btn" onclick="selectAllPlayers()">✅ Select All</button>
+                    <button class="staff-btn secondary-btn" onclick="clearAllPlayers()">❌ Clear All</button>
+                    <button class="staff-btn checkin-btn" onclick="startGroupPhoto()">📸 Take Group Photo</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Camera with Player Detection -->
+            <div id="group-photo-camera" class="group-photo-step" style="display: none;">
+                <h4>Position Players in Order by Pinny Number</h4>
+                <div id="group-camera-container">
+                    <div id="group-camera-preview" style="position: relative; display: none;">
+                        <video id="group-camera-video" autoplay playsinline style="width: 100%; max-width: 600px; border-radius: 10px;"></video>
+                        <div class="group-camera-overlay">
+                            <div class="group-pose-guide"></div>
+                        </div>
+                    </div>
+                    <canvas id="group-camera-canvas" style="display: none;"></canvas>
+                    <img id="group-captured-image" style="display: none; max-width: 100%; border-radius: 8px;">
+                    <div id="group-camera-placeholder" style="padding: 2rem; text-align: center; color: #666;">
+                        📷<br><small>Click "Start Camera" to begin</small>
+                    </div>
+                </div>
+                
+                <!-- Expected Players Display -->
+                <div class="expected-players">
+                    <h5>Expected in this photo:</h5>
+                    <div id="expected-players-list"></div>
+                </div>
+                
+                <div class="group-camera-controls">
+                    <button id="start-group-camera-btn" class="staff-btn photo-btn">📷 Start Camera</button>
+                    <button id="take-group-photo-btn" class="staff-btn checkin-btn" style="display: none;">📸 Take Photo</button>
+                    <button id="retake-group-btn" class="staff-btn secondary-btn" style="display: none;">🔄 Retake</button>
+                    <button id="analyze-group-btn" class="staff-btn checkin-btn" style="display: none;">🔍 Detect Players</button>
+                </div>
+                <div id="group-camera-status" style="margin-top: 1rem; text-align: center; font-weight: 600;"></div>
+            </div>
+
+            <!-- Step 4: Confirm Players in Photo -->
+            <div id="group-photo-confirm" class="group-photo-step" style="display: none;">
+                <h4>Confirm Players in Photo</h4>
+                <div class="detected-vs-expected">
+                    <div class="detected-numbers">
+                        <h5>Detected Pinny Numbers:</h5>
+                        <div id="detected-numbers-list"></div>
+                    </div>
+                    <div class="confirm-checklist">
+                        <h5>Confirm players in photo:</h5>
+                        <div id="confirm-players-list"></div>
+                    </div>
+                </div>
+                <div class="confirm-actions">
+                    <button class="staff-btn secondary-btn" onclick="goBackToCamera()">📷 Retake Photo</button>
+                    <button class="staff-btn checkin-btn" onclick="saveGroupPhoto()">💾 Save Photo</button>
+                </div>
+            </div>
+
+            <!-- Step 5: Results & Next Photo -->
+            <div id="group-photo-results" class="group-photo-step" style="display: none;">
+                <h4>Photo Saved Successfully!</h4>
+                <div class="results-summary">
+                    <div id="results-message"></div>
+                    <div id="remaining-players"></div>
+                </div>
+                <div class="results-actions">
+                    <button class="staff-btn checkin-btn" onclick="takeAnotherGroupPhoto()" style="display: none;">📸 Take Another Photo</button>
+                    <button class="staff-btn secondary-btn" onclick="finishGroupPhotos()">✅ Finish</button>
+                    <button class="staff-btn photo-btn" onclick="startNewPosition()">🔄 New Position</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Photo Upload Modal -->
+    <div id="upload-photo-modal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close" onclick="closeUploadModal()">&times;</span>
+            <h3>📁 Upload & Connect Photos</h3>
+            
+            <div class="upload-section">
+                <h4>Select Photo to Upload</h4>
+                <input type="file" id="photo-upload-input" accept="image/*" onchange="handlePhotoUpload(event)">
+                <div id="upload-preview" style="margin-top: 1rem; display: none;">
+                    <img id="upload-preview-image" style="max-width: 100%; max-height: 300px; border-radius: 8px;">
+                </div>
+            </div>
+            
+            <div id="upload-detection" style="display: none;">
+                <h4>Select Photo Type</h4>
+                <div class="photo-type-selection">
+                    <button class="staff-btn checkin-btn" onclick="setUploadType('individual')">👤 Individual Player</button>
+                    <button class="staff-btn photo-btn" onclick="setUploadType('group')">👥 Group Photo</button>
+                </div>
+            </div>
+            
+            <!-- Individual Player Selection -->
+            <div id="upload-individual" style="display: none;">
+                <h4>Select Player</h4>
+                <div class="filter-row">
+                    <label>Location:</label>
+                    <select id="upload-location" onchange="loadUploadPlayers()">
+                        <option value="">Choose Location</option>
+                        <option value="NORTH">North</option>
+                        <option value="SOUTH">South</option>
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <label>Age Group:</label>
+                    <select id="upload-age" onchange="loadUploadPlayers()">
+                        <option value="">Choose Age</option>
+                        <option value="13U">13U</option>
+                        <option value="14U">14U</option>
+                        <option value="15U">15U</option>
+                        <option value="16U">16U</option>
+                        <option value="17U">17U</option>
+                        <option value="18U">18U</option>
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <label>Player:</label>
+                    <select id="upload-player">
+                        <option value="">Choose Player</option>
+                    </select>
+                </div>
+                <button class="staff-btn checkin-btn" onclick="saveIndividualUpload()">💾 Save Individual Photo</button>
+            </div>
+            
+            <!-- Group Photo Selection -->
+            <div id="upload-group" style="display: none;">
+                <h4>Connect to Players</h4>
+                <div class="filter-row">
+                    <label>Location:</label>
+                    <select id="upload-group-location" onchange="loadUploadGroupPlayers()">
+                        <option value="">Choose Location</option>
+                        <option value="NORTH">North</option>
+                        <option value="SOUTH">South</option>
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <label>Age Group:</label>
+                    <select id="upload-group-age" onchange="loadUploadGroupPlayers()">
+                        <option value="">Choose Age</option>
+                        <option value="13U">13U</option>
+                        <option value="14U">14U</option>
+                        <option value="15U">15U</option>
+                        <option value="16U">16U</option>
+                        <option value="17U">17U</option>
+                        <option value="18U">18U</option>
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <label>Position (optional):</label>
+                    <select id="upload-group-position">
+                        <option value="">All Positions</option>
+                        <option value="Setter">Setter</option>
+                        <option value="Outside Hitter">Outside Hitter</option>
+                        <option value="Middle Blocker">Middle Blocker</option>
+                        <option value="Right Side">Right Side</option>
+                        <option value="Opposite">Opposite</option>
+                        <option value="Libero">Libero</option>
+                        <option value="Defensive Specialist">Defensive Specialist</option>
+                    </select>
+                </div>
+                
+                <div id="upload-group-players" style="display: none;">
+                    <h5>Select players in this photo:</h5>
+                    <div id="upload-group-checklist" class="players-checklist">
+                        <!-- Players will be loaded here -->
+                    </div>
+                    <button class="staff-btn photo-btn" onclick="analyzeUploadedPhoto()">🔍 Auto-Detect Players</button>
+                    <button class="staff-btn checkin-btn" onclick="saveGroupUpload()">💾 Save Group Photo</button>
+                </div>
+            </div>
+            
+            <div id="upload-status" style="margin-top: 1rem; text-align: center; font-weight: 600;"></div>
         </div>
     </div>
 
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
-    <script>
-        // Simple placeholder functionality for group photos page
-        
-        // Initialize group photos page
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Group Photos page loaded');
-            
-            // Wait for auth
-            waitForAuth().then(() => {
-                console.log('Group Photos auth complete');
-                updatePageTitle();
-            });
-        });
-
-        // Wait for authentication
-        async function waitForAuth() {
-            return new Promise((resolve) => {
-                const checkAuth = () => {
-                    if (window.authManager) {
-                        if (authManager.isLoggedIn()) {
-                            console.log('Auth check passed');
-                            resolve();
-                        } else {
-                            console.log('Auth manager exists but not logged in, waiting...');
-                            setTimeout(checkAuth, 200);
-                        }
-                    } else {
-                        console.log('Auth manager not ready, waiting...');
-                        setTimeout(checkAuth, 100);
-                    }
-                };
-                checkAuth();
-            });
-        }
-
-        // Update page title
-        function updatePageTitle() {
-            const titleElement = document.getElementById('page-title');
-            if (titleElement) {
-                titleElement.textContent = '📸 Group Photos';
-            }
-        }
-
-        // Show coming soon modal
-        function showComingSoon(featureName) {
-            const modal = document.getElementById('coming-soon-modal');
-            const title = document.getElementById('coming-soon-title');
-            
-            title.textContent = `${featureName} - Coming Soon!`;
-            modal.style.display = 'block';
-        }
-
-        // Close coming soon modal
-        function closeComingSoon() {
-            const modal = document.getElementById('coming-soon-modal');
-            modal.style.display = 'none';
-        }
-
-        // Export functions for global access
-        window.showComingSoon = showComingSoon;
-        window.closeComingSoon = closeComingSoon;
-    </script>
+    <script src="js/group-photos.js"></script>
 </body>
 </html>
