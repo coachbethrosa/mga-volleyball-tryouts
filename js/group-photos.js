@@ -678,9 +678,23 @@ function stopGroupCameraStream() {
     groupPhotoState.cameraStream = null;
 }
 
-// View group photos (placeholder)
-function viewGroupPhotos() {
-    alert('View Group Photos feature coming soon! This will show a gallery of all group photos taken.');
+// View group photos (implement actual functionality)
+async function viewGroupPhotos() {
+    if (!authManager.requireAuth()) return;
+    
+    try {
+        // This would call your API to get group photos
+        // For now, show a simple alert with instructions
+        alert('Group Photos Gallery\n\nTo view group photos:\n1. Check your Google Drive folder\n2. Look for files starting with "GroupPhoto_"\n3. Or implement a gallery view in your Google Apps Script\n\nWould you like me to add a proper gallery interface?');
+        
+        // TODO: Implement actual gallery interface
+        // const photos = await window.mgaAPI.getGroupPhotos();
+        // displayGroupPhotosGallery(photos);
+        
+    } catch (error) {
+        console.error('Error loading group photos:', error);
+        alert('Error loading group photos. Please try again.');
+    }
 }
 
 // Photo Upload Functions
