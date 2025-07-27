@@ -72,14 +72,14 @@ body {
     margin: 2px 0 0 0;
 }
 
-/* UPDATED Consistent Button Styling */
+/* UPDATED Consistent Button Styling - Compact Size */
 .nav-btn {
     background: #4169E1 !important;
     color: white !important;
-    padding: 8px 16px !important;
+    padding: 4px 8px !important;
     border: none !important;
     border-radius: 6px !important;
-    font-size: 0.9rem !important;
+    font-size: 0.7rem !important;
     font-weight: 600 !important;
     text-decoration: none !important;
     display: flex !important;
@@ -87,15 +87,12 @@ body {
     justify-content: center !important;
     cursor: pointer !important;
     transition: all 0.3s ease !important;
-    box-shadow: 0 2px 8px rgba(65, 105, 225, 0.3) !important;
-    min-height: 36px !important;
     white-space: nowrap !important;
 }
 
 .nav-btn:hover {
     background: #3151c1 !important;
     transform: translateY(-1px) !important;
-    box-shadow: 0 4px 12px rgba(65, 105, 225, 0.4) !important;
     text-decoration: none !important;
     color: white !important;
 }
@@ -103,22 +100,19 @@ body {
 .logout-btn {
     background: #dc3545 !important;
     color: white !important;
-    padding: 8px 16px !important;
+    padding: 4px 8px !important;
     border: none !important;
     border-radius: 6px !important;
-    font-size: 0.9rem !important;
+    font-size: 0.7rem !important;
     font-weight: 600 !important;
     cursor: pointer !important;
     transition: all 0.3s ease !important;
-    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3) !important;
-    min-height: 36px !important;
     white-space: nowrap !important;
 }
 
 .logout-btn:hover {
     background: #c82333 !important;
     transform: translateY(-1px) !important;
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4) !important;
 }
 
 /* Dashboard Styles - Your Original Design */
@@ -1037,14 +1031,8 @@ body {
     
     .header-right {
         flex-direction: column;
-        gap: 8px;
+        gap: 6px;
         align-items: stretch;
-    }
-    
-    .nav-btn, .logout-btn {
-        font-size: 0.8rem !important;
-        padding: 6px 12px !important;
-        min-height: 32px !important;
     }
     
     .stat-number { 
@@ -1109,13 +1097,7 @@ body {
     }
     
     .header-right {
-        gap: 6px;
-    }
-    
-    .nav-btn, .logout-btn {
-        font-size: 0.75rem !important;
-        padding: 5px 10px !important;
-        min-height: 30px !important;
+        gap: 4px;
     }
 
     .photo-grid {
