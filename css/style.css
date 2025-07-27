@@ -424,23 +424,21 @@ body {
 
 .photo-container {
     position: relative;
-    height: 400px;           /* Keep height same */
-    width: 100%;            /* Fill the full width of card */
+    width: 100%;
     background: #f8f9fa;
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding: 55px 20px 0 20px;  /* Equal 15px margins on top, left, right */
+    padding: 25px 25px 25px 25px;  /* Equal padding all around */
     overflow: hidden;
 }
 
 .player-photo {
-    width: 100%;             /* Fill the full width of container */
-    height: calc(100% - 20px); /* Account for top padding */
-    object-fit: contain;
+    width: 100%;             /* Fill available width */
+    height: auto;            /* Let height be determined by aspect ratio */
+    object-fit: cover;       /* Or remove this line entirely */
     object-position: center top;
 }
-
 
 .no-photo {
     color: #999;
