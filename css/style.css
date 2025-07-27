@@ -455,8 +455,8 @@ body {
 
 .photo-status {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 33px;        /* 25px padding + 8px = 33px */
+    right: 33px;      /* 25px padding + 8px = 33px */
     background: rgba(0,0,0,0.7);
     color: white;
     padding: 4px 8px;
@@ -464,6 +464,7 @@ body {
     font-size: 0.7rem;
     font-weight: 600;
 }
+
 
 .player-info {
     padding: 15px;
@@ -689,8 +690,8 @@ body {
 /* Completion indicator for card overview */
 .completion-indicator {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 33px;        /* 25px padding + 8px = 33px */
+    right: 100px;     /* Move it left so it doesn't overlap photo status */
     width: 24px;
     height: 24px;
     border-radius: 50%;
@@ -704,15 +705,15 @@ body {
 }
 
 .completion-indicator.complete {
-    background: #2ecc71;
+    background: #4169E1;
 }
 
 .completion-indicator.partial {
-    background: #f39c12;
+    background: #8B5A96;
 }
 
 .completion-indicator.none {
-    background: #e74c3c;
+    background: #DC143C;
 }
 
 /* Pulse animation for today's chip */
