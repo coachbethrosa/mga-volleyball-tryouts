@@ -430,16 +430,17 @@ body {
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding: 12px 12px 0 12px;  /* Equal top, left, right margins */
+    padding: 20px 20px 0 20px;  /* Equal 20px margins on top, left, right */
     overflow: hidden;
 }
 
 .player-photo {
     width: 100%;             /* Fill the full width of container */
-    height: calc(100% - 12px); /* Account for top padding */
+    height: calc(100% - 20px); /* Account for top padding */
     object-fit: contain;
     object-position: center top;
 }
+
 
 .no-photo {
     color: #999;
