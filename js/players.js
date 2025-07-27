@@ -16,7 +16,7 @@ let settingsLoaded = false;
 
 // Initialize players page when DOM loads
 document.addEventListener('DOMContentLoaded', function() {
-    window.debugLog('Players page initializing...');
+    debugLog('Players page initializing...');
     
     // Wait for auth before loading data
     waitForAuth().then(() => {
@@ -161,53 +161,6 @@ function updateHeaderTitle() {
         } else {
             headerTitle.textContent = `📷 ${TRYOUT_NAME}`;
         }
-    }
-}
-
-// Wait for authentication
-async function waitForAuth() {
-    return new Promise((resolve) => {
-        const checkAuth = () => {
-            if (window.authManager) {
-                if (authManager.isLoggedIn()) {
-                    console.log('[MGA Debug] Auth check passed, proceeding');
-                    resolve();
-                } else {
-                    console.log('[MGA Debug] Auth manager exists but not logged in, waiting...');
-                    setTimeout(checkAuth, 200);
-                }
-            } else {
-                console.log('[MGA Debug] Auth manager not ready, waiting...');
-                setTimeout(checkAuth, 100);
-            }
-        };
-        checkAuth();
-    });
-}
-
-// Get current date string in M/D format
-function getCurrentDateString() {
-    const today = new Date();
-    return `${today.getMonth() + 1}/${today.getDate()}`;
-}
-
-// Check if a date is today
-function isToday(dateString) {
-    return dateString === getCurrentDateString();
-}
-
-// Check if a date is in the past
-function isPastDate(dateString) {
-    try {
-        const [month, day] = dateString.split('/').map(Number);
-        const currentYear = new Date().getFullYear();
-        const dateObj = new Date(currentYear, month - 1, day);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        return dateObj < today;
-    } catch (error) {
-        console.error('Error parsing date:', dateString, error);
-        return false;
     }
 }
 
@@ -529,13 +482,6 @@ function updateSessionStats(data) {
     }
 }
 
-// Escape HTML
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
 // Sort players
 function sortPlayers(sortBy) {
     if (!authManager.requireAuth()) return;
@@ -610,13 +556,8 @@ async function startCamera() {
         status.textContent = 'Starting camera...';
         status.style.color = '#4169E1';
         
-        cameraStream = await navigator.mediaDevices.getUserMedia({ 
-            video: { 
-                width: { ideal: 640 },
-                height: { ideal: 640 },
-                facingMode: 'user'
-            } 
-        });
+        // Use shared camera constraints
+        cameraStream = await navigator.mediaDevices.getUserMedia(CameraUtils.getIndividualPhotoConstraints());
         
         video.srcObject = cameraStream;
         previewContainer.style.display = 'block';  // Show the container with overlay
@@ -646,16 +587,9 @@ async function detectPinnyNumber(canvas, expectedPinny) {
         // Convert canvas to image data for OCR
         const imageData = canvas.toDataURL('image/jpeg', 0.8);
         
-        // Run OCR on the image
-        const { data: { text } } = await Tesseract.recognize(imageData, 'eng', {
-            logger: m => console.log(m) // Optional: log OCR progress
-        });
-        
-        console.log('OCR detected text:', text);
-        
-        // Extract numbers from the detected text
-        const numbers = text.match(/\d+/g) || [];
-        console.log('Detected numbers:', numbers);
+        // Use shared OCR function
+        const text = await detectTextInImage(imageData);
+        const numbers = extractNumbers(text);
         
         // Check if expected pinny number is found
         const expectedStr = expectedPinny.toString();
@@ -801,10 +735,8 @@ async function submitPhotoToAPI(photoData, player) {
 }
 
 function stopCameraStream() {
-    if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
-        cameraStream = null;
-    }
+    CameraUtils.stopStream(cameraStream);
+    cameraStream = null;
 }
 
 function resetCameraInterface() {
