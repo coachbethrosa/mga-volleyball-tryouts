@@ -273,16 +273,20 @@ body {
     font-weight: 600;
 }
 
-/* UPDATED Navigation Tabs - Fixed Desktop Scrolling */
+/* UPDATED Navigation Tabs - Sticky at Top */
 .nav-tabs {
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
     padding: 10px;
     overflow-x: auto;
     overflow-y: hidden;
     white-space: nowrap;
     -webkit-overflow-scrolling: touch;
     display: block;
-    position: relative;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
 /* Show scrollbar on desktop */
