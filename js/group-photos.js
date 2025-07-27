@@ -110,7 +110,8 @@ async function loadPositionPlayers() {
     const age = document.getElementById('group-age').value;
     const position = document.getElementById('group-position').value;
     
-    debugLog('Form values:', { location, age, position });
+    console.log('=== GROUP PHOTOS DEBUG ===');
+    console.log('Form values:', { location, age, position });
     
     if (!location || !age || !position) {
         alert('Please select location, age, and position');
@@ -122,66 +123,95 @@ async function loadPositionPlayers() {
         groupPhotoState.age = age;
         groupPhotoState.position = position;
         
-        debugLog(`Loading players for ${location} ${age} ${position}`);
+        console.log(`Loading players for ${location} ${age} ${position}`);
         
         // Get all players for this location/age
-        debugLog('Calling mgaAPI.getPlayers with:', { location, age, sort: 'pinny' });
+        console.log('Calling mgaAPI.getPlayers with:', { location, age, sort: 'pinny' });
         const data = await window.mgaAPI.getPlayers(location, age, 'pinny');
-        debugLog('API response:', data);
+        console.log('Raw API response:', data);
         
         if (!data || !data.players) {
+            console.log('ERROR: API returned no data or no players array');
             alert(`No data returned from API for ${location} ${age}`);
-            debugLog('API returned no data or no players array');
             return;
         }
         
-        debugLog(`Received ${data.players.length} total players for ${location} ${age}`);
+        console.log(`Received ${data.players.length} total players for ${location} ${age}`);
         
         if (data.players.length === 0) {
+            console.log('ERROR: Zero players returned from API');
             alert(`No players found for ${location} ${age}. Please check your data.`);
             return;
         }
         
         // Debug: Log first few players to see data structure
-        debugLog('Sample player data (first 3):', data.players.slice(0, 3));
+        console.log('Sample player data (first 3):');
+        data.players.slice(0, 3).forEach((player, i) => {
+            console.log(`Player ${i+1}:`, {
+                name: `${player.first} ${player.last}`,
+                position: player.position,
+                pinny: player.pinny,
+                location: player.location,
+                age: player.age
+            });
+        });
         
         // Debug: Log all unique positions found
         const allPositions = [...new Set(data.players.map(p => p.position).filter(p => p))];
-        debugLog('All positions found in data:', allPositions);
+        console.log('All positions found in data:', allPositions);
         
         // Debug: Show position matching logic
-        debugLog(`Looking for position containing: "${position}"`);
+        console.log(`Looking for players with position containing: "${position}"`);
         
         // Filter by position - be more flexible with matching
         const positionPlayers = data.players.filter(player => {
             const playerPosition = player.position || '';
-            const hasMatchingPosition = playerPosition.toLowerCase().includes(position.toLowerCase()) || 
-                                      position.toLowerCase().includes(playerPosition.toLowerCase());
+            const positionLower = position.toLowerCase();
+            const playerPositionLower = playerPosition.toLowerCase();
+            
+            // Try multiple matching strategies
+            const exactMatch = playerPositionLower === positionLower;
+            const playerContainsPosition = playerPositionLower.includes(positionLower);
+            const positionContainsPlayer = positionLower.includes(playerPositionLower);
+            
+            const hasMatchingPosition = exactMatch || playerContainsPosition || positionContainsPlayer;
             const hasPinny = player.pinny && player.pinny !== 'N/A' && player.pinny.toString().trim() !== '';
             
-            if (hasMatchingPosition) {
-                debugLog(`✓ Player: ${player.first} ${player.last}, Position: "${playerPosition}", Pinny: "${player.pinny}", HasValidPinny: ${hasPinny}`);
+            if (hasMatchingPosition || playerPosition) {
+                console.log(`Player: ${player.first} ${player.last}`);
+                console.log(`  Position: "${playerPosition}" vs looking for "${position}"`);
+                console.log(`  Exact match: ${exactMatch}`);
+                console.log(`  Player contains position: ${playerContainsPosition}`);
+                console.log(`  Position contains player: ${positionContainsPlayer}`);
+                console.log(`  Has valid pinny: ${hasPinny} (pinny: "${player.pinny}")`);
+                console.log(`  INCLUDED: ${hasMatchingPosition && hasPinny}`);
+                console.log('---');
             }
             
             return hasMatchingPosition && hasPinny;
         });
         
-        debugLog(`Found ${positionPlayers.length} players matching position "${position}" with valid pinnies`);
+        console.log(`RESULT: Found ${positionPlayers.length} players matching position "${position}" with valid pinnies`);
         
         if (positionPlayers.length === 0) {
             // Show helpful error message
             const playersWithPosition = data.players.filter(player => {
                 const playerPosition = player.position || '';
-                return playerPosition.toLowerCase().includes(position.toLowerCase()) || 
-                       position.toLowerCase().includes(playerPosition.toLowerCase());
+                const positionLower = position.toLowerCase();
+                const playerPositionLower = playerPosition.toLowerCase();
+                return playerPositionLower === positionLower || 
+                       playerPositionLower.includes(positionLower) || 
+                       positionLower.includes(playerPositionLower);
             });
             
-            debugLog(`Players with matching position (regardless of pinny): ${playersWithPosition.length}`);
+            console.log(`Players with matching position (regardless of pinny): ${playersWithPosition.length}`);
             
             if (playersWithPosition.length > 0) {
                 const playersWithoutPinnies = playersWithPosition.filter(p => !p.pinny || p.pinny === 'N/A' || p.pinny.toString().trim() === '');
+                console.log('Players with position but no pinny:', playersWithoutPinnies);
                 alert(`Found ${playersWithPosition.length} ${position} players, but ${playersWithoutPinnies.length} don't have pinny numbers assigned. Please assign pinny numbers first.`);
             } else {
+                console.log('No players found with matching position at all');
                 alert(`No ${position} players found for ${location} ${age}. Available positions: ${allPositions.join(', ')}`);
             }
             return;
@@ -195,8 +225,8 @@ async function loadPositionPlayers() {
         showGroupPhotoStep('checklist');
         
     } catch (error) {
-        console.error('Error loading position players:', error);
-        debugLog('Full error:', error);
+        console.error('ERROR loading position players:', error);
+        console.log('Full error details:', error);
         alert(`Error loading players: ${error.message}`);
     }
 }
