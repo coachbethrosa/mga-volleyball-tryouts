@@ -1047,6 +1047,23 @@ body {
     margin-bottom: 2rem;
 }
 
+.group-photo-step h4 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 1.5rem;
+    font-size: 1.2rem;
+    color: #333;
+    padding: 1rem 0;
+}
+
+.modal-content h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 1.5rem;
+}
+
 .filter-row {
     display: flex;
     align-items: center;
@@ -1138,6 +1155,20 @@ body {
 }
 
 /* Group Camera Styles */
+#group-camera-preview {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#group-camera-video {
+    width: 100%;
+    max-width: 600px;
+    border-radius: 10px;
+    display: block;
+}
+
 .group-camera-overlay {
     position: absolute;
     top: 0;
@@ -1146,35 +1177,34 @@ body {
     bottom: 0;
     pointer-events: none;
     z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .group-pose-guide {
-    position: absolute;
-    top: 5%;
-    left: 10%;
-    right: 10%;
+    position: relative;
+    width: 80%;
     height: 80%;
     border: 3px dashed #fff;
     border-radius: 20px;
     background: rgba(255,255,255,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
 }
 
 .group-pose-guide::before {
     content: "👥";
-    position: absolute;
-    top: 15%;
-    left: 50%;
-    transform: translateX(-50%);
     font-size: 4rem;
     color: rgba(255,255,255,0.8);
+    margin-top: 20px;
 }
 
 .group-pose-guide::after {
     content: "Line up players by pinny number\AMake sure all pinny numbers are visible";
-    position: absolute;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
     color: white;
     font-size: 0.9rem;
     text-align: center;
@@ -1182,6 +1212,7 @@ body {
     background: rgba(0,0,0,0.7);
     padding: 8px 15px;
     border-radius: 8px;
+    margin-bottom: 20px;
 }
 
 .expected-players {
