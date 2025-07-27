@@ -23,36 +23,15 @@ let uploadState = {
 
 // Initialize group photos page
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Group Photos page loaded');
+    debugLog('Group Photos page loaded');
     
     // Wait for auth
     waitForAuth().then(() => {
-        console.log('Group Photos auth complete');
+        debugLog('Group Photos auth complete');
         updatePageTitle();
         setupEventListeners();
     });
 });
-
-// Wait for authentication
-async function waitForAuth() {
-    return new Promise((resolve) => {
-        const checkAuth = () => {
-            if (window.authManager) {
-                if (authManager.isLoggedIn()) {
-                    console.log('Auth check passed');
-                    resolve();
-                } else {
-                    console.log('Auth manager exists but not logged in, waiting...');
-                    setTimeout(checkAuth, 200);
-                }
-            } else {
-                console.log('Auth manager not ready, waiting...');
-                setTimeout(checkAuth, 100);
-            }
-        };
-        checkAuth();
-    });
-}
 
 // Setup event listeners
 function setupEventListeners() {
@@ -180,9 +159,9 @@ function displayPlayersChecklist(players) {
                    checked 
                    onchange="togglePlayerSelection('${player.playerID}')">
             <label for="player-${player.playerID}">
-                <span class="player-pinny">#${player.pinny}</span>
-                <span class="player-name">${player.last}, ${player.first}</span>
-                <span class="player-school">${player.school || 'N/A'}</span>
+                <span class="player-pinny">#${escapeHtml(player.pinny)}</span>
+                <span class="player-name">${escapeHtml(formatPlayerName(player))}</span>
+                <span class="player-school">${escapeHtml(player.school || 'N/A')}</span>
             </label>
         </div>
     `).join('');
@@ -280,13 +259,8 @@ async function startGroupCamera() {
         status.textContent = 'Starting camera...';
         status.style.color = '#4169E1';
         
-        groupPhotoState.cameraStream = await navigator.mediaDevices.getUserMedia({ 
-            video: { 
-                width: { ideal: 1280 },
-                height: { ideal: 720 },
-                facingMode: 'environment' // Use back camera for group photos
-            } 
-        });
+        // Use shared camera constraints for group photos
+        groupPhotoState.cameraStream = await navigator.mediaDevices.getUserMedia(CameraUtils.getGroupPhotoConstraints());
         
         video.srcObject = groupPhotoState.cameraStream;
         previewContainer.style.display = 'block';
@@ -372,16 +346,9 @@ async function analyzeGroupPhoto() {
         status.textContent = 'Analyzing photo for pinny numbers...';
         status.style.color = '#4169E1';
         
-        // Use OCR to detect all numbers in the photo
-        const { data: { text } } = await Tesseract.recognize(groupPhotoState.capturedPhoto, 'eng', {
-            logger: m => console.log(m)
-        });
-        
-        console.log('OCR detected text:', text);
-        
-        // Extract all numbers from detected text
-        const allNumbers = text.match(/\d+/g) || [];
-        console.log('All detected numbers:', allNumbers);
+        // Use shared OCR functions
+        const text = await detectTextInImage(groupPhotoState.capturedPhoto);
+        const allNumbers = extractNumbers(text);
         
         // Filter to only include numbers that match expected pinny numbers
         const expectedPinnies = groupPhotoState.selectedPlayers.map(p => p.pinny);
@@ -389,8 +356,8 @@ async function analyzeGroupPhoto() {
         
         groupPhotoState.detectedNumbers = [...new Set(detectedPinnies)]; // Remove duplicates
         
-        console.log('Expected pinnies:', expectedPinnies);
-        console.log('Detected pinnies:', groupPhotoState.detectedNumbers);
+        debugLog('Expected pinnies:', expectedPinnies);
+        debugLog('Detected pinnies:', groupPhotoState.detectedNumbers);
         
         // Initialize confirmed players based on detected numbers
         groupPhotoState.confirmedPlayers = groupPhotoState.selectedPlayers.filter(player => 
@@ -617,10 +584,8 @@ function resetGroupCameraInterface() {
 
 // Stop group camera stream
 function stopGroupCameraStream() {
-    if (groupPhotoState.cameraStream) {
-        groupPhotoState.cameraStream.getTracks().forEach(track => track.stop());
-        groupPhotoState.cameraStream = null;
-    }
+    CameraUtils.stopStream(groupPhotoState.cameraStream);
+    groupPhotoState.cameraStream = null;
 }
 
 // View group photos (placeholder)
