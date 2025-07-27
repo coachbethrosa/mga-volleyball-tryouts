@@ -21,7 +21,7 @@
         
         <div class="header-center">
             <h1 id="page-title">👤 Player Photos</h1>
-            <div class="subtitle">Individual Player Review</div>
+            <div class="subtitle">Individual Player Tryout Details</div>
         </div>
         
         <div class="header-right">
@@ -31,13 +31,13 @@
         </div>
     </div>
     
-    <a href="#" class="refresh-info" onclick="loadPlayers(); return false;">
-        Updates automatically - click to refresh now
-    </a>
-    
     <div class="nav-tabs" id="navigation-tabs">
         <div class="loading">Loading sessions...</div>
     </div>
+    
+    <a href="#" class="refresh-info" onclick="loadPlayers(); return false;" id="refresh-info-bar">
+        Updates automatically every 60 seconds
+    </a>
     
     <div class="controls">
         <div class="stats" id="session-stats">
