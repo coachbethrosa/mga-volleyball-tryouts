@@ -640,7 +640,7 @@ async function startCamera() {
         status.style.color = '#dc3545';
     }
 }
-function takePhoto() {
+async function takePhoto() {
     const video = document.getElementById('camera-video');
     const canvas = document.getElementById('camera-canvas');
     const capturedImage = document.getElementById('captured-image');
@@ -662,24 +662,43 @@ function takePhoto() {
     
     capturedImage.src = photoData;
     capturedImage.style.display = 'block';
-    video.style.display = 'none';
+    document.getElementById('camera-preview-container').style.display = 'none'; // Hide container with overlay
     
     currentPhotoPlayer.capturedPhoto = photoData;
     
     document.getElementById('take-photo-btn').style.display = 'none';
     document.getElementById('retake-btn').style.display = 'inline-block';
-    document.getElementById('submit-photo-btn').style.display = 'inline-block';
     
-    status.textContent = 'Photo captured! Review and submit or retake.';
-    status.style.color = '#28a745';
+    // Check pinny number if player has one assigned
+    if (currentPhotoPlayer.pinny && currentPhotoPlayer.pinny !== 'N/A') {
+        const result = await detectPinnyNumber(canvas, currentPhotoPlayer.pinny);
+        
+        if (result.success) {
+            document.getElementById('submit-photo-btn').style.display = 'inline-block';
+        } else {
+            // Show submit button anyway but with warning color
+            const submitBtn = document.getElementById('submit-photo-btn');
+            submitBtn.style.display = 'inline-block';
+            submitBtn.style.background = '#f39c12'; // Warning color
+            submitBtn.textContent = '⚠️ Submit Anyway';
+        }
+    } else {
+        status.textContent = 'Photo captured! No pinny number to verify.';
+        status.style.color = '#28a745';
+        document.getElementById('submit-photo-btn').style.display = 'inline-block';
+    }
 }
 
 function retakePhoto() {
-    const video = document.getElementById('camera-video');
+    const previewContainer = document.getElementById('camera-preview-container');
     const capturedImage = document.getElementById('captured-image');
     const status = document.getElementById('camera-status');
+    const submitBtn = document.getElementById('submit-photo-btn');
     
-    video.style.display = 'block';
+    submitBtn.style.background = '#28a745'; // Reset to green
+    submitBtn.textContent = '✅ Submit Photo';
+    
+    previewContainer.style.display = 'block'; // Show container with overlay
     capturedImage.style.display = 'none';
     
     document.getElementById('retake-btn').style.display = 'none';
@@ -693,6 +712,7 @@ function retakePhoto() {
     status.textContent = 'Ready to take photo again';
     status.style.color = '#4169E1';
 }
+
 
 async function submitPhoto() {
     if (!currentPhotoPlayer || !currentPhotoPlayer.capturedPhoto) {
