@@ -424,15 +424,15 @@ body {
 
 .photo-container {
     position: relative;
+    height: 489.7px;        /* 439.7px photo + 25px top + 25px bottom padding */
     width: 100%;
     background: #f8f9fa;
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding: 25px 25px 25px 25px;  /* Equal padding all around */
+    padding: 25px 25px 25px 25px;
     overflow: hidden;
 }
-
 .player-photo {
     width: 100%;             /* Fill available width */
     height: auto;            /* Let height be determined by aspect ratio */
