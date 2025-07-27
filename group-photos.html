@@ -21,7 +21,7 @@
         
         <div class="header-center">
             <h1 id="page-title">👥 Group Photos</h1>
-            <div class="subtitle">Position Team Photos</div>
+            <div class="subtitle">Players by Position and Age</div>
         </div>
         
         <div class="header-right">
@@ -29,6 +29,10 @@
             <a href="players.html" class="nav-btn">👤 Player Photos</a>
             <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
+    </div>
+    
+    <div class="nav-tabs" id="group-navigation-tabs">
+        <span style="color: #666; padding: 10px;">Select options below to filter group photos</span>
     </div>
     
     <!-- Main Actions Menu -->
@@ -283,8 +287,10 @@
                     <div id="upload-group-checklist" class="players-checklist">
                         <!-- Players will be loaded here -->
                     </div>
-                    <button class="staff-btn photo-btn" onclick="analyzeUploadedPhoto()">🔍 Auto-Detect Players</button>
-                    <button class="staff-btn checkin-btn" onclick="saveGroupUpload()">💾 Save Group Photo</button>
+                    <div class="upload-group-actions">
+                        <button class="staff-btn photo-btn" onclick="analyzeUploadedPhoto()">🔍 Auto-Detect Players</button>
+                        <button class="staff-btn checkin-btn" onclick="saveGroupUpload()">💾 Save Group Photo</button>
+                    </div>
                 </div>
             </div>
             
