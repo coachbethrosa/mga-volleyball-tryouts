@@ -54,7 +54,12 @@
             <span class="close" onclick="closeCameraModal()">&times;</span>
             <h3 id="camera-modal-title">📸 Capture Photo</h3>
             <div id="camera-container">
-                <video id="camera-video" autoplay playsinline style="display: none; width: 100%; max-width: 400px; border-radius: 10px;"></video>
+                <div id="camera-preview-container" style="position: relative; display: none;">
+                    <video id="camera-video" autoplay playsinline style="width: 100%; max-width: 400px; border-radius: 10px;"></video>
+                    <div class="camera-overlay">
+                        <div class="pose-guide"></div>
+                    </div>
+                </div>
                 <canvas id="camera-canvas" style="display: none;"></canvas>
                 <img id="captured-image" style="display: none; max-width: 100%; border-radius: 8px;">
                 <div id="camera-placeholder" style="padding: 2rem; text-align: center; color: #666;">
