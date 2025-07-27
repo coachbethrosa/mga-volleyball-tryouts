@@ -629,7 +629,7 @@ body {
 
 /* Completed check-in - Green */
 .checkin-chip.completed {
-    background: #2ecc71;
+    background: #4169E1;
     color: white;
     border-color: #27ae60;
     box-shadow: 0 1px 3px rgba(46, 204, 113, 0.3);
@@ -646,7 +646,7 @@ body {
 
 /* Missed date - Red */
 .checkin-chip.missed {
-    background: #e74c3c;
+    background: #DC143C;
     color: white;
     border-color: #c0392b;
     opacity: 0.8;
