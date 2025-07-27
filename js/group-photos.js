@@ -120,13 +120,50 @@ async function loadPositionPlayers() {
         groupPhotoState.age = age;
         groupPhotoState.position = position;
         
+        debugLog(`Loading players for ${location} ${age} ${position}`);
+        
         // Get all players for this location/age
         const data = await window.mgaAPI.getPlayers(location, age, 'pinny');
+        debugLog('All players received:', data.players);
         
-        // Filter by position
-        const positionPlayers = data.players.filter(player => 
-            player.position === position && player.pinny && player.pinny !== 'N/A'
-        );
+        if (!data.players || data.players.length === 0) {
+            alert(`No players found for ${location} ${age}. Please check your data.`);
+            return;
+        }
+        
+        // Debug: Log all unique positions found
+        const allPositions = [...new Set(data.players.map(p => p.position).filter(p => p))];
+        debugLog('All positions found in data:', allPositions);
+        
+        // Filter by position - be more flexible with matching
+        const positionPlayers = data.players.filter(player => {
+            const playerPosition = player.position || '';
+            const hasMatchingPosition = playerPosition.toLowerCase().includes(position.toLowerCase()) || 
+                                      position.toLowerCase().includes(playerPosition.toLowerCase());
+            const hasPinny = player.pinny && player.pinny !== 'N/A' && player.pinny.toString().trim() !== '';
+            
+            debugLog(`Player: ${player.first} ${player.last}, Position: "${playerPosition}", Pinny: "${player.pinny}", Match: ${hasMatchingPosition}, HasPinny: ${hasPinny}`);
+            
+            return hasMatchingPosition && hasPinny;
+        });
+        
+        debugLog(`Found ${positionPlayers.length} players matching position "${position}" with valid pinnies`);
+        
+        if (positionPlayers.length === 0) {
+            // Show helpful error message
+            const playersWithoutPinnies = data.players.filter(player => {
+                const playerPosition = player.position || '';
+                return playerPosition.toLowerCase().includes(position.toLowerCase()) || 
+                       position.toLowerCase().includes(playerPosition.toLowerCase());
+            });
+            
+            if (playersWithoutPinnies.length > 0) {
+                alert(`Found ${playersWithoutPinnies.length} ${position} players, but none have pinny numbers assigned. Please assign pinny numbers first.`);
+            } else {
+                alert(`No ${position} players found for ${location} ${age}. Available positions: ${allPositions.join(', ')}`);
+            }
+            return;
+        }
         
         groupPhotoState.allPlayers = positionPlayers;
         groupPhotoState.selectedPlayers = [...positionPlayers]; // Default: select all
