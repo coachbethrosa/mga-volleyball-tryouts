@@ -1178,6 +1178,78 @@ function checkAbbreviationMatch(selectedPosition, playerPosition) {
     
     return false;
 }
+
+// ADD THIS FUNCTION anywhere in your group-photos.js file (replace the existing checkAbbreviationMatch if it exists):
+
+function checkAbbreviationMatch(selectedPosition, playerPosition) {
+    const selected = selectedPosition.toLowerCase().trim();
+    const player = playerPosition.toLowerCase().trim();
+    
+    // Direct match first
+    if (selected === player) {
+        return true;
+    }
+    
+    // Enhanced volleyball position mapping (supports both directions)
+    const positionMap = {
+        // Setters
+        's': ['setter', 'set'],
+        'setter': ['s', 'set'],
+        
+        // Outside Hitters  
+        'oh': ['outside hitter', 'outside', 'left side'],
+        'outside hitter': ['oh', 'outside'],
+        'outside': ['oh', 'outside hitter'],
+        
+        // Middle Blockers
+        'mb': ['middle blocker', 'middle'],
+        'middle blocker': ['mb', 'middle'],
+        'middle': ['mb', 'middle blocker'],
+        
+        // Opposites
+        'opp': ['opposite', 'opposite hitter', 'right side hitter'],
+        'opposite': ['opp', 'opposite hitter'],
+        'opposite hitter': ['opp', 'opposite'],
+        
+        // Defensive Specialist/Libero
+        'ds/l': ['defensive specialist', 'libero', 'ds', 'l', 'defensive specialist/libero'],
+        'ds': ['defensive specialist', 'ds/l'],
+        'l': ['libero', 'ds/l'],
+        'defensive specialist': ['ds', 'ds/l'],
+        'libero': ['l', 'ds/l'],
+        'defensive specialist/libero': ['ds/l', 'ds', 'l'],
+        
+        // Right Side (alternative for Opposite)
+        'rs': ['right side', 'right side hitter', 'opp', 'opposite'],
+        'right side': ['rs', 'opp', 'opposite'],
+        'right side hitter': ['rs', 'opp', 'opposite']
+    };
+    
+    // Check if selected position maps to player position
+    const selectedMappings = positionMap[selected] || [];
+    if (selectedMappings.includes(player)) {
+        return true;
+    }
+    
+    // Check if player position maps to selected position  
+    const playerMappings = positionMap[player] || [];
+    if (playerMappings.includes(selected)) {
+        return true;
+    }
+    
+    // Check partial contains (for cases like "DS/L" containing "DS")
+    if (selected.length > 1 && player.includes(selected)) {
+        return true;
+    }
+    
+    if (player.length > 1 && selected.includes(player)) {
+        return true;
+    }
+    
+    return false;
+}
+
+
 // Display group players checklist for upload
 function displayUploadGroupChecklist(players) {
     const container = document.getElementById('upload-group-checklist');
