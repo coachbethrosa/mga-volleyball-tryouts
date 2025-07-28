@@ -94,13 +94,11 @@
                     <label>Position:</label>
                     <select id="group-position">
                         <option value="">Choose Position</option>
-                        <option value="Setter">Setter</option>
-                        <option value="Outside Hitter">Outside Hitter</option>
-                        <option value="Middle Blocker">Middle Blocker</option>
-                        <option value="Right Side">Right Side</option>
-                        <option value="Opposite">Opposite</option>
-                        <option value="Libero">Libero</option>
-                        <option value="Defensive Specialist">Defensive Specialist</option>
+                        <option value="S">Setter (S)</option>
+                        <option value="OH">Outside Hitter (OH)</option>
+                        <option value="MB">Middle Blocker (MB)</option>
+                        <option value="OPP">Opposite (OPP)</option>
+                        <option value="DS/L">Defensive Specialist/Libero (DS/L)</option>
                     </select>
                 </div>
                 <button class="staff-btn checkin-btn" onclick="loadPositionPlayers()">📋 Load Players</button>
@@ -270,15 +268,13 @@
                 </div>
                 <div class="filter-row">
                     <label>Position (optional):</label>
-                    <select id="upload-group-position">
+                    <select id="upload-group-position" onchange="loadUploadGroupPlayers()">
                         <option value="">All Positions</option>
-                        <option value="Setter">Setter</option>
-                        <option value="Outside Hitter">Outside Hitter</option>
-                        <option value="Middle Blocker">Middle Blocker</option>
-                        <option value="Right Side">Right Side</option>
-                        <option value="Opposite">Opposite</option>
-                        <option value="Libero">Libero</option>
-                        <option value="Defensive Specialist">Defensive Specialist</option>
+                        <option value="S">Setter (S)</option>
+                        <option value="OH">Outside Hitter (OH)</option>
+                        <option value="MB">Middle Blocker (MB)</option>
+                        <option value="OPP">Opposite (OPP)</option>
+                        <option value="DS/L">Defensive Specialist/Libero (DS/L)</option>
                     </select>
                 </div>
                 
