@@ -1517,3 +1517,98 @@ window.analyzeUploadedPhoto = analyzeUploadedPhoto;
 window.closeGallery = closeGallery;
 window.filterGallery = filterGallery;
 window.openPhotoModal = openPhotoModal;
+
+
+// REPLACE the saveGroupUpload function in group-photos.js with this DEBUGGING version:
+
+async function saveGroupUpload() {
+    if (!uploadState.photoData) {
+        alert('Please select a photo first');
+        return;
+    }
+    
+    if (uploadState.selectedPlayers.length === 0) {
+        alert('Please select at least one player');
+        return;
+    }
+    
+    try {
+        const location = document.getElementById('upload-group-location').value;
+        const age = document.getElementById('upload-group-age').value;
+        const position = document.getElementById('upload-group-position').value || 'Mixed';
+        
+        const status = document.getElementById('upload-status');
+        status.textContent = 'Saving group photo...';
+        status.style.color = '#4169E1';
+        
+        // Create metadata for group photo
+        const metadata = {
+            type: 'group',
+            location: location,
+            age: age,
+            position: position,
+            players: uploadState.selectedPlayers.map(p => ({
+                playerID: p.playerID,
+                pinny: p.pinny,
+                name: `${p.first} ${p.last}`
+            })),
+            photoNumber: 1,
+            timestamp: new Date().toISOString(),
+            source: 'upload'
+        };
+        
+        console.log('=== DEBUGGING GROUP PHOTO SAVE ===');
+        console.log('1. Metadata:', metadata);
+        console.log('2. Photo data length:', uploadState.photoData.length);
+        console.log('3. API Base URL:', window.API_BASE_URL);
+        
+        // DEBUGGING: Try a simple API call first
+        console.log('4. Testing simple API call first...');
+        try {
+            const testResult = await window.mgaAPI.getDashboardData();
+            console.log('✅ Simple API call works:', testResult);
+        } catch (testError) {
+            console.log('❌ Simple API call failed:', testError);
+            throw new Error(`Basic API connection failed: ${testError.message}`);
+        }
+        
+        // DEBUGGING: Check if saveGroupPhoto function exists
+        console.log('5. Checking if saveGroupPhoto function exists...');
+        if (typeof window.mgaAPI.saveGroupPhoto !== 'function') {
+            throw new Error('saveGroupPhoto function not found in mgaAPI');
+        }
+        console.log('✅ saveGroupPhoto function exists');
+        
+        // Now try the actual save
+        console.log('6. Attempting to save group photo...');
+        const result = await window.mgaAPI.saveGroupPhoto(uploadState.photoData, metadata);
+        console.log('7. Save result:', result);
+        
+        if (result.success) {
+            status.textContent = `✅ Group photo saved with ${uploadState.selectedPlayers.length} players!`;
+            status.style.color = '#28a745';
+            
+            setTimeout(() => {
+                closeUploadModal();
+                // Refresh gallery if it's open
+                if (document.getElementById('group-photos-gallery') && 
+                    document.getElementById('group-photos-gallery').style.display !== 'none') {
+                    viewGroupPhotos();
+                }
+            }, 2000);
+        } else {
+            throw new Error(result.error || 'Failed to save group photo');
+        }
+        
+    } catch (error) {
+        console.error('=== GROUP PHOTO SAVE ERROR ===');
+        console.error('Full error details:', error);
+        console.error('Error stack:', error.stack);
+        
+        document.getElementById('upload-status').innerHTML = `
+            ❌ Error: ${error.message}<br>
+            <small>Check console for details</small>
+        `;
+        document.getElementById('upload-status').style.color = '#dc3545';
+    }
+}
