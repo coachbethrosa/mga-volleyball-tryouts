@@ -543,16 +543,25 @@ function goBackToCamera() {
 }
 
 // Save group photo
+// REPLACE the saveGroupPhoto() function in group-photos.js with this:
+
 async function saveGroupPhoto() {
     if (groupPhotoState.confirmedPlayers.length === 0) {
         alert('Please select at least one player in the photo');
         return;
     }
     
+    if (!groupPhotoState.capturedPhoto) {
+        alert('No photo to save');
+        return;
+    }
+    
     try {
         const status = document.getElementById('group-camera-status');
-        status.textContent = 'Saving group photo...';
-        status.style.color = '#4169E1';
+        if (status) {
+            status.textContent = 'Saving group photo...';
+            status.style.color = '#4169E1';
+        }
         
         // Create photo metadata
         const photoMetadata = {
@@ -569,15 +578,23 @@ async function saveGroupPhoto() {
             timestamp: new Date().toISOString()
         };
         
-        // Save photo (placeholder - you'll need to implement this API call)
-        console.log('Saving group photo with metadata:', photoMetadata);
+        console.log('=== SAVING GROUP PHOTO ===');
+        console.log('Photo metadata:', photoMetadata);
         console.log('Photo data size:', groupPhotoState.capturedPhoto.length);
         
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        const result = { success: true };
+        // Call the real API
+        const result = await window.mgaAPI.saveGroupPhoto(groupPhotoState.capturedPhoto, photoMetadata);
+        
+        console.log('API response:', result);
         
         if (result.success) {
+            console.log('✅ Group photo saved successfully');
+            
+            if (status) {
+                status.textContent = '✅ Photo saved successfully!';
+                status.style.color = '#28a745';
+            }
+            
             displayResults();
             showGroupPhotoStep('results');
         } else {
@@ -585,11 +602,18 @@ async function saveGroupPhoto() {
         }
         
     } catch (error) {
-        console.error('Error saving group photo:', error);
-        alert(`Error saving photo: ${error.message}`);
+        console.error('❌ Error saving group photo:', error);
+        
+        const status = document.getElementById('group-camera-status');
+        if (status) {
+            status.textContent = `❌ Error: ${error.message}`;
+            status.style.color = '#dc3545';
+        }
+        
+        // Show user-friendly error
+        alert(`Error saving photo: ${error.message}\n\nPlease try again or contact support if the problem persists.`);
     }
 }
-
 // Display results
 function displayResults() {
     const messageElement = document.getElementById('results-message');
