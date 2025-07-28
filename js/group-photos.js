@@ -104,6 +104,51 @@ function showGroupPhotoStep(step) {
     });
 }
 
+// NEW: Load available ages for upload based on location
+async function loadAvailableAges(locationSelectId, ageSelectId) {
+    const location = document.getElementById(locationSelectId).value;
+    const ageSelect = document.getElementById(ageSelectId);
+    
+    // Clear existing options
+    ageSelect.innerHTML = '<option value="">Choose Age</option>';
+    
+    if (!location) {
+        return;
+    }
+    
+    try {
+        // Get available tabs which includes player counts
+        const tabs = await window.mgaAPI.getAvailableTabs();
+        
+        // Filter tabs for the selected location and extract ages
+        const availableAges = tabs
+            .filter(tab => tab.location === location)
+            .map(tab => tab.age)
+            .sort();
+        
+        // Populate age dropdown with only available ages
+        availableAges.forEach(age => {
+            const option = document.createElement('option');
+            option.value = age;
+            option.textContent = age;
+            ageSelect.appendChild(option);
+        });
+        
+        console.log(`Loaded ${availableAges.length} available ages for ${location}:`, availableAges);
+        
+    } catch (error) {
+        console.error('Error loading available ages:', error);
+        // Fallback to all ages if API call fails
+        const allAges = ['U12', 'U13', 'U14', 'U15', 'U16', 'U17', 'U18'];
+        allAges.forEach(age => {
+            const option = document.createElement('option');
+            option.value = age;
+            option.textContent = age;
+            ageSelect.appendChild(option);
+        });
+    }
+}
+
 // Load players for selected position
 async function loadPositionPlayers() {
     const location = document.getElementById('group-location').value;
@@ -580,7 +625,7 @@ async function saveGroupPhoto() {
         console.log('Photo metadata:', photoMetadata);
         console.log('Photo data size:', groupPhotoState.capturedPhoto.length);
         
-        // Call the real API
+        // Call the API with improved error handling
         const result = await window.mgaAPI.saveGroupPhoto(groupPhotoState.capturedPhoto, photoMetadata);
         
         console.log('API response:', result);
@@ -589,7 +634,7 @@ async function saveGroupPhoto() {
             console.log('✅ Group photo saved successfully');
             
             if (status) {
-                status.textContent = '✅ Photo saved successfully!';
+                status.textContent = `✅ ${result.message || 'Photo saved successfully!'}`;
                 status.style.color = '#28a745';
             }
             
@@ -1203,7 +1248,7 @@ async function saveIndividualUpload() {
     }
 }
 
-// DEBUGGING: Save group photo upload with detailed error checking
+// Save group photo upload with enhanced error handling
 async function saveGroupUpload() {
     if (!uploadState.photoData) {
         alert('Please select a photo first');
@@ -1240,35 +1285,16 @@ async function saveGroupUpload() {
             source: 'upload'
         };
         
-        console.log('=== DEBUGGING GROUP PHOTO SAVE ===');
-        console.log('1. Metadata:', metadata);
-        console.log('2. Photo data length:', uploadState.photoData.length);
-        console.log('3. API Base URL:', window.API_BASE_URL);
+        console.log('=== SAVING GROUP UPLOAD ===');
+        console.log('Metadata:', metadata);
+        console.log('Photo data length:', uploadState.photoData.length);
         
-        // DEBUGGING: Try a simple API call first
-        console.log('4. Testing simple API call first...');
-        try {
-            const testResult = await window.mgaAPI.getDashboardData();
-            console.log('✅ Simple API call works:', testResult);
-        } catch (testError) {
-            console.log('❌ Simple API call failed:', testError);
-            throw new Error(`Basic API connection failed: ${testError.message}`);
-        }
-        
-        // DEBUGGING: Check if saveGroupPhoto function exists
-        console.log('5. Checking if saveGroupPhoto function exists...');
-        if (typeof window.mgaAPI.saveGroupPhoto !== 'function') {
-            throw new Error('saveGroupPhoto function not found in mgaAPI');
-        }
-        console.log('✅ saveGroupPhoto function exists');
-        
-        // Now try the actual save
-        console.log('6. Attempting to save group photo...');
+        // Use the improved API save function
         const result = await window.mgaAPI.saveGroupPhoto(uploadState.photoData, metadata);
-        console.log('7. Save result:', result);
+        console.log('Save result:', result);
         
         if (result.success) {
-            status.textContent = `✅ Group photo saved with ${uploadState.selectedPlayers.length} players!`;
+            status.textContent = `✅ ${result.message || `Group photo saved with ${uploadState.selectedPlayers.length} players!`}`;
             status.style.color = '#28a745';
             
             setTimeout(() => {
@@ -1285,12 +1311,11 @@ async function saveGroupUpload() {
         
     } catch (error) {
         console.error('=== GROUP PHOTO SAVE ERROR ===');
-        console.error('Full error details:', error);
-        console.error('Error stack:', error.stack);
+        console.error('Error details:', error);
         
         document.getElementById('upload-status').innerHTML = `
             ❌ Error: ${error.message}<br>
-            <small>Check console for details</small>
+            <small>Please try again or contact support</small>
         `;
         document.getElementById('upload-status').style.color = '#dc3545';
     }
@@ -1473,6 +1498,7 @@ window.handlePhotoUpload = handlePhotoUpload;
 window.setUploadType = setUploadType;
 window.loadUploadPlayers = loadUploadPlayers;
 window.loadUploadGroupPlayers = loadUploadGroupPlayers;
+window.loadAvailableAges = loadAvailableAges;
 window.toggleUploadPlayer = toggleUploadPlayer;
 window.saveIndividualUpload = saveIndividualUpload;
 window.saveGroupUpload = saveGroupUpload;
