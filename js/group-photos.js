@@ -1,4 +1,4 @@
-// Group Photos - Complete functionality
+// Group Photos - Complete functionality with optimized filtering
 // This file is loaded only on group-photos.html
 
 let groupPhotoState = {
@@ -999,8 +999,6 @@ function setUploadType(type) {
     }
 }
 
-// FIXED UPLOAD FUNCTIONS
-
 // Load players for individual photo upload
 async function loadUploadPlayers() {
     const location = document.getElementById('upload-location').value;
@@ -1032,9 +1030,7 @@ async function loadUploadPlayers() {
     }
 }
 
-// Load players for group photo upload - FIXED VERSION
-// REPLACE the loadUploadGroupPlayers function with this FIXED version:
-
+// OPTIMIZED: Load players for group photo upload - filters instantly without showing all players first
 async function loadUploadGroupPlayers() {
     const location = document.getElementById('upload-group-location').value;
     const age = document.getElementById('upload-group-age').value;
@@ -1044,7 +1040,6 @@ async function loadUploadGroupPlayers() {
     console.log('Location:', location);
     console.log('Age:', age);
     console.log('Position filter:', `"${position}"`);
-    console.log('Position is empty?', position === '' || !position);
     
     if (!location || !age) {
         document.getElementById('upload-group-players').style.display = 'none';
@@ -1052,92 +1047,59 @@ async function loadUploadGroupPlayers() {
     }
     
     try {
+        // Show loading state immediately
+        const container = document.getElementById('upload-group-checklist');
+        container.innerHTML = '<div class="loading"><div class="loading-spinner"></div><div class="loading-text">Loading players...</div></div>';
+        document.getElementById('upload-group-players').style.display = 'block';
+        
         const data = await window.mgaAPI.getPlayers(location, age, 'pinny');
         console.log('Raw player data:', data);
         
         if (data && data.players) {
-            let filteredPlayers = data.players;
-            console.log(`Total players before filtering: ${filteredPlayers.length}`);
+            console.log(`Total players loaded: ${data.players.length}`);
             
-            // Log all player positions to debug
-            console.log('All player positions:');
-            filteredPlayers.forEach((p, index) => {
-                console.log(`  ${index + 1}. ${p.first} ${p.last}: "${p.position}"`);
-            });
+            // OPTIMIZED: Filter immediately without showing all players first
+            let filteredPlayers;
             
-            // FIXED: Only filter if a position is actually selected
             if (position && position.trim() !== '' && position !== 'All Positions') {
-                console.log(`\n=== FILTERING BY POSITION: "${position}" ===`);
-                const originalCount = filteredPlayers.length;
+                console.log(`🔍 Filtering by position: "${position}"`);
                 
                 filteredPlayers = data.players.filter(player => {
                     const playerPosition = (player.position || '').toString().trim();
                     const selectedPosition = position.toString().trim();
                     
-                    console.log(`\nChecking player ${player.first} ${player.last}:`);
-                    console.log(`  Player position: "${playerPosition}"`);
-                    console.log(`  Looking for: "${selectedPosition}"`);
-                    
-                    if (!playerPosition) {
-                        console.log(`  ❌ Player has no position data`);
-                        return false;
+                    // Quick exact match first (most common case)
+                    if (playerPosition === selectedPosition) {
+                        return true;
                     }
                     
-                    // Multiple matching strategies
-                    const exactMatch = playerPosition.toLowerCase() === selectedPosition.toLowerCase();
-                    console.log(`  Exact match: ${exactMatch}`);
-                    
-                    const playerContainsSelected = playerPosition.toLowerCase().includes(selectedPosition.toLowerCase());
-                    console.log(`  Player contains selected: ${playerContainsSelected}`);
-                    
-                    const selectedContainsPlayer = selectedPosition.toLowerCase().includes(playerPosition.toLowerCase());
-                    console.log(`  Selected contains player: ${selectedContainsPlayer}`);
-                    
-                    // Special cases for common abbreviations
-                    const abbreviationMatch = checkAbbreviationMatch(selectedPosition, playerPosition);
-                    console.log(`  Abbreviation match: ${abbreviationMatch}`);
-                    
-                    const isMatch = exactMatch || playerContainsSelected || selectedContainsPlayer || abbreviationMatch;
-                    console.log(`  🎯 FINAL RESULT: ${isMatch ? 'INCLUDED' : 'EXCLUDED'}`);
-                    
-                    return isMatch;
+                    // Enhanced matching if needed
+                    return checkAbbreviationMatch(selectedPosition, playerPosition);
                 });
                 
-                console.log(`\n📊 FILTERING RESULTS:`);
-                console.log(`  Before: ${originalCount} players`);
-                console.log(`  After: ${filteredPlayers.length} players`);
-                console.log(`  Filtered out: ${originalCount - filteredPlayers.length} players`);
+                console.log(`✅ Filtered to ${filteredPlayers.length} ${position} players`);
                 
                 if (filteredPlayers.length === 0) {
-                    // Show helpful message
                     const allPositions = [...new Set(data.players.map(p => p.position).filter(p => p))];
-                    console.log('❌ No matches found!');
-                    console.log('Available positions:', allPositions);
-                    
                     document.getElementById('upload-status').innerHTML = `
                         ⚠️ No players found for position "${position}"<br>
                         <small>Available positions: ${allPositions.join(', ')}</small>
                     `;
                     document.getElementById('upload-status').style.color = '#f39c12';
-                } else {
-                    console.log('✅ Found matches:');
-                    filteredPlayers.forEach(p => {
-                        console.log(`  - ${p.first} ${p.last} (${p.position})`);
-                    });
                 }
             } else {
-                console.log('⏭️ No position filter applied - showing all players');
+                console.log('📋 No position filter - showing all players');
+                filteredPlayers = data.players;
             }
             
             // Store for upload
             uploadState.allPlayers = filteredPlayers;
             uploadState.selectedPlayers = []; // Reset selections
             
-            // Display players checklist
+            // Display filtered players immediately
             displayUploadGroupChecklist(filteredPlayers);
-            document.getElementById('upload-group-players').style.display = 'block';
             
-            // Clear any previous status messages if we have players
+            // Clear status if we have players and no position filter issues
             if (filteredPlayers.length > 0 && (!position || position.trim() === '' || position === 'All Positions')) {
                 document.getElementById('upload-status').textContent = '';
             }
@@ -1146,109 +1108,12 @@ async function loadUploadGroupPlayers() {
         console.error('Error loading group upload players:', error);
         document.getElementById('upload-status').textContent = 'Error loading players';
         document.getElementById('upload-status').style.color = '#dc3545';
+        
+        // Show error in the container too
+        const container = document.getElementById('upload-group-checklist');
+        container.innerHTML = '<div style="text-align: center; color: #dc3545;">Error loading players</div>';
     }
 }
-
-// Helper function for abbreviation matching
-function checkAbbreviationMatch(selectedPosition, playerPosition) {
-    const selected = selectedPosition.toLowerCase();
-    const player = playerPosition.toLowerCase();
-    
-    // Common volleyball position abbreviations
-    const abbreviations = {
-        'outside hitter': ['oh', 'outside'],
-        'middle blocker': ['mb', 'middle'],
-        'right side': ['rs', 'right', 'right side hitter'],
-        'opposite': ['opp', 'opposite hitter'],
-        'setter': ['s', 'set'],
-        'libero': ['lib', 'l'],
-        'defensive specialist': ['ds', 'defensive']
-    };
-    
-    // Check if selected position matches any abbreviations
-    for (const [fullPosition, abbrevs] of Object.entries(abbreviations)) {
-        if (selected === fullPosition || abbrevs.includes(selected)) {
-            // Check if player position matches this category
-            if (player === fullPosition || abbrevs.includes(player) || 
-                fullPosition.includes(player) || player.includes(fullPosition)) {
-                return true;
-            }
-        }
-    }
-    
-    return false;
-}
-
-// ADD THIS FUNCTION anywhere in your group-photos.js file (replace the existing checkAbbreviationMatch if it exists):
-
-function checkAbbreviationMatch(selectedPosition, playerPosition) {
-    const selected = selectedPosition.toLowerCase().trim();
-    const player = playerPosition.toLowerCase().trim();
-    
-    // Direct match first
-    if (selected === player) {
-        return true;
-    }
-    
-    // Enhanced volleyball position mapping (supports both directions)
-    const positionMap = {
-        // Setters
-        's': ['setter', 'set'],
-        'setter': ['s', 'set'],
-        
-        // Outside Hitters  
-        'oh': ['outside hitter', 'outside', 'left side'],
-        'outside hitter': ['oh', 'outside'],
-        'outside': ['oh', 'outside hitter'],
-        
-        // Middle Blockers
-        'mb': ['middle blocker', 'middle'],
-        'middle blocker': ['mb', 'middle'],
-        'middle': ['mb', 'middle blocker'],
-        
-        // Opposites
-        'opp': ['opposite', 'opposite hitter', 'right side hitter'],
-        'opposite': ['opp', 'opposite hitter'],
-        'opposite hitter': ['opp', 'opposite'],
-        
-        // Defensive Specialist/Libero
-        'ds/l': ['defensive specialist', 'libero', 'ds', 'l', 'defensive specialist/libero'],
-        'ds': ['defensive specialist', 'ds/l'],
-        'l': ['libero', 'ds/l'],
-        'defensive specialist': ['ds', 'ds/l'],
-        'libero': ['l', 'ds/l'],
-        'defensive specialist/libero': ['ds/l', 'ds', 'l'],
-        
-        // Right Side (alternative for Opposite)
-        'rs': ['right side', 'right side hitter', 'opp', 'opposite'],
-        'right side': ['rs', 'opp', 'opposite'],
-        'right side hitter': ['rs', 'opp', 'opposite']
-    };
-    
-    // Check if selected position maps to player position
-    const selectedMappings = positionMap[selected] || [];
-    if (selectedMappings.includes(player)) {
-        return true;
-    }
-    
-    // Check if player position maps to selected position  
-    const playerMappings = positionMap[player] || [];
-    if (playerMappings.includes(selected)) {
-        return true;
-    }
-    
-    // Check partial contains (for cases like "DS/L" containing "DS")
-    if (selected.length > 1 && player.includes(selected)) {
-        return true;
-    }
-    
-    if (player.length > 1 && selected.includes(player)) {
-        return true;
-    }
-    
-    return false;
-}
-
 
 // Display group players checklist for upload
 function displayUploadGroupChecklist(players) {
@@ -1338,189 +1203,7 @@ async function saveIndividualUpload() {
     }
 }
 
-// Save group photo upload
-async function saveGroupUpload() {
-    if (!uploadState.photoData) {
-        alert('Please select a photo first');
-        return;
-    }
-    
-    if (uploadState.selectedPlayers.length === 0) {
-        alert('Please select at least one player');
-        return;
-    }
-    
-    try {
-        const location = document.getElementById('upload-group-location').value;
-        const age = document.getElementById('upload-group-age').value;
-        const position = document.getElementById('upload-group-position').value || 'Mixed';
-        
-        const status = document.getElementById('upload-status');
-        status.textContent = 'Saving group photo...';
-        status.style.color = '#4169E1';
-        
-        // Create metadata for group photo
-        const metadata = {
-            type: 'group',
-            location: location,
-            age: age,
-            position: position,
-            players: uploadState.selectedPlayers.map(p => ({
-                playerID: p.playerID,
-                pinny: p.pinny,
-                name: `${p.first} ${p.last}`
-            })),
-            photoNumber: 1, // For uploads, always 1
-            timestamp: new Date().toISOString(),
-            source: 'upload'
-        };
-        
-        console.log('Saving group upload with metadata:', metadata);
-        
-        const result = await window.mgaAPI.saveGroupPhoto(uploadState.photoData, metadata);
-        
-        if (result.success) {
-            status.textContent = `✅ Group photo saved with ${uploadState.selectedPlayers.length} players!`;
-            status.style.color = '#28a745';
-            
-            setTimeout(() => {
-                closeUploadModal();
-                // Refresh gallery if it's open
-                if (document.getElementById('group-photos-gallery') && 
-                    document.getElementById('group-photos-gallery').style.display !== 'none') {
-                    viewGroupPhotos();
-                }
-            }, 2000);
-        } else {
-            throw new Error(result.error || 'Failed to save group photo');
-        }
-        
-    } catch (error) {
-        console.error('Error saving group upload:', error);
-        document.getElementById('upload-status').textContent = `❌ Error: ${error.message}`;
-        document.getElementById('upload-status').style.color = '#dc3545';
-    }
-}
-
-// FIXED: Analyze uploaded photo for pinny numbers with better OCR functions
-async function analyzeUploadedPhoto() {
-    if (!uploadState.photoData) {
-        alert('Please select a photo first');
-        return;
-    }
-    
-    const status = document.getElementById('upload-status');
-    
-    try {
-        status.textContent = 'Analyzing photo for pinny numbers...';
-        status.style.color = '#4169E1';
-        
-        console.log('=== STARTING OCR ANALYSIS ===');
-        console.log('Photo data length:', uploadState.photoData.length);
-        
-        // Use Tesseract.js directly (since it's loaded in the page)
-        if (typeof Tesseract === 'undefined') {
-            throw new Error('OCR library not available');
-        }
-        
-        console.log('Tesseract library found, starting recognition...');
-        
-        const { data: { text } } = await Tesseract.recognize(
-            uploadState.photoData,
-            'eng',
-            {
-                logger: m => console.log('OCR Progress:', m)
-            }
-        );
-        
-        console.log('OCR Raw text:', text);
-        
-        // Extract numbers from the text
-        const numbers = text.match(/\d+/g) || [];
-        console.log('All numbers found:', numbers);
-        
-        // Get expected pinny numbers from available players
-        const expectedPinnies = uploadState.allPlayers
-            .map(p => p.pinny)
-            .filter(p => p && p !== 'N/A' && p.toString().trim() !== '')
-            .map(p => p.toString());
-        
-        console.log('Expected pinny numbers:', expectedPinnies);
-        
-        // Find matches
-        const detectedPinnies = numbers.filter(num => expectedPinnies.includes(num));
-        console.log('Detected pinny matches:', detectedPinnies);
-        
-        if (detectedPinnies.length > 0) {
-            // Auto-select players based on detected pinny numbers
-            uploadState.selectedPlayers = uploadState.allPlayers.filter(player => 
-                detectedPinnies.includes(player.pinny.toString())
-            );
-            
-            console.log('Auto-selected players:', uploadState.selectedPlayers.map(p => `${p.first} ${p.last} (#${p.pinny})`));
-            
-            // Update checkboxes
-            uploadState.allPlayers.forEach(player => {
-                const checkbox = document.getElementById(`upload-player-${player.playerID}`);
-                if (checkbox) {
-                    checkbox.checked = uploadState.selectedPlayers.some(p => p.playerID === player.playerID);
-                }
-            });
-            
-            status.textContent = `✅ Found ${detectedPinnies.length} pinny numbers: ${detectedPinnies.join(', ')}`;
-            status.style.color = '#28a745';
-        } else if (numbers.length > 0) {
-            status.textContent = `⚠️ Found numbers (${numbers.slice(0, 10).join(', ')}) but none match expected pinnies`;
-            status.style.color = '#f39c12';
-        } else {
-            status.textContent = '⚠️ No numbers detected in photo. Please select players manually.';
-            status.style.color = '#f39c12';
-        }
-        
-    } catch (error) {
-        console.error('=== OCR ERROR ===', error);
-        status.textContent = `❌ OCR failed: ${error.message}. Please select players manually.`;
-        status.style.color = '#dc3545';
-    }
-}
-
-// Helper function to format player name
-function formatPlayerName(player) {
-    return `${player.first} ${player.last}`;
-}
-
-// Export functions for global access
-window.openGroupPhotoModal = openGroupPhotoModal;
-window.closeGroupPhotoModal = closeGroupPhotoModal;
-window.loadPositionPlayers = loadPositionPlayers;
-window.togglePlayerSelection = togglePlayerSelection;
-window.selectAllPlayers = selectAllPlayers;
-window.clearAllPlayers = clearAllPlayers;
-window.startGroupPhoto = startGroupPhoto;
-window.toggleConfirmedPlayer = toggleConfirmedPlayer;
-window.goBackToCamera = goBackToCamera;
-window.saveGroupPhoto = saveGroupPhoto;
-window.takeAnotherGroupPhoto = takeAnotherGroupPhoto;
-window.finishGroupPhotos = finishGroupPhotos;
-window.startNewPosition = startNewPosition;
-window.viewGroupPhotos = viewGroupPhotos;
-window.openUploadModal = openUploadModal;
-window.closeUploadModal = closeUploadModal;
-window.handlePhotoUpload = handlePhotoUpload;
-window.setUploadType = setUploadType;
-window.loadUploadPlayers = loadUploadPlayers;
-window.loadUploadGroupPlayers = loadUploadGroupPlayers;
-window.toggleUploadPlayer = toggleUploadPlayer;
-window.saveIndividualUpload = saveIndividualUpload;
-window.saveGroupUpload = saveGroupUpload;
-window.analyzeUploadedPhoto = analyzeUploadedPhoto;
-window.closeGallery = closeGallery;
-window.filterGallery = filterGallery;
-window.openPhotoModal = openPhotoModal;
-
-
-// REPLACE the saveGroupUpload function in group-photos.js with this DEBUGGING version:
-
+// DEBUGGING: Save group photo upload with detailed error checking
 async function saveGroupUpload() {
     if (!uploadState.photoData) {
         alert('Please select a photo first');
@@ -1612,3 +1295,188 @@ async function saveGroupUpload() {
         document.getElementById('upload-status').style.color = '#dc3545';
     }
 }
+
+// Analyze uploaded photo for pinny numbers with Tesseract.js
+async function analyzeUploadedPhoto() {
+    if (!uploadState.photoData) {
+        alert('Please select a photo first');
+        return;
+    }
+    
+    const status = document.getElementById('upload-status');
+    
+    try {
+        status.textContent = 'Analyzing photo for pinny numbers...';
+        status.style.color = '#4169E1';
+        
+        console.log('=== STARTING OCR ANALYSIS ===');
+        console.log('Photo data length:', uploadState.photoData.length);
+        
+        // Use Tesseract.js directly (since it's loaded in the page)
+        if (typeof Tesseract === 'undefined') {
+            throw new Error('OCR library not available');
+        }
+        
+        console.log('Tesseract library found, starting recognition...');
+        
+        const { data: { text } } = await Tesseract.recognize(
+            uploadState.photoData,
+            'eng',
+            {
+                logger: m => console.log('OCR Progress:', m)
+            }
+        );
+        
+        console.log('OCR Raw text:', text);
+        
+        // Extract numbers from the text
+        const numbers = text.match(/\d+/g) || [];
+        console.log('All numbers found:', numbers);
+        
+        // Get expected pinny numbers from available players
+        const expectedPinnies = uploadState.allPlayers
+            .map(p => p.pinny)
+            .filter(p => p && p !== 'N/A' && p.toString().trim() !== '')
+            .map(p => p.toString());
+        
+        console.log('Expected pinny numbers:', expectedPinnies);
+        
+        // Find matches
+        const detectedPinnies = numbers.filter(num => expectedPinnies.includes(num));
+        console.log('Detected pinny matches:', detectedPinnies);
+        
+        if (detectedPinnies.length > 0) {
+            // Auto-select players based on detected pinny numbers
+            uploadState.selectedPlayers = uploadState.allPlayers.filter(player => 
+                detectedPinnies.includes(player.pinny.toString())
+            );
+            
+            console.log('Auto-selected players:', uploadState.selectedPlayers.map(p => `${p.first} ${p.last} (#${p.pinny})`));
+            
+            // Update checkboxes
+            uploadState.allPlayers.forEach(player => {
+                const checkbox = document.getElementById(`upload-player-${player.playerID}`);
+                if (checkbox) {
+                    checkbox.checked = uploadState.selectedPlayers.some(p => p.playerID === player.playerID);
+                }
+            });
+            
+            status.textContent = `✅ Found ${detectedPinnies.length} pinny numbers: ${detectedPinnies.join(', ')}`;
+            status.style.color = '#28a745';
+        } else if (numbers.length > 0) {
+            status.textContent = `⚠️ Found numbers (${numbers.slice(0, 10).join(', ')}) but none match expected pinnies`;
+            status.style.color = '#f39c12';
+        } else {
+            status.textContent = '⚠️ No numbers detected in photo. Please select players manually.';
+            status.style.color = '#f39c12';
+        }
+        
+    } catch (error) {
+        console.error('=== OCR ERROR ===', error);
+        status.textContent = `❌ OCR failed: ${error.message}. Please select players manually.`;
+        status.style.color = '#dc3545';
+    }
+}
+
+// Enhanced abbreviation matching function
+function checkAbbreviationMatch(selectedPosition, playerPosition) {
+    const selected = selectedPosition.toLowerCase().trim();
+    const player = playerPosition.toLowerCase().trim();
+    
+    // Direct match first
+    if (selected === player) {
+        return true;
+    }
+    
+    // Enhanced volleyball position mapping (supports both directions)
+    const positionMap = {
+        // Setters
+        's': ['setter', 'set'],
+        'setter': ['s', 'set'],
+        
+        // Outside Hitters  
+        'oh': ['outside hitter', 'outside', 'left side'],
+        'outside hitter': ['oh', 'outside'],
+        'outside': ['oh', 'outside hitter'],
+        
+        // Middle Blockers
+        'mb': ['middle blocker', 'middle'],
+        'middle blocker': ['mb', 'middle'],
+        'middle': ['mb', 'middle blocker'],
+        
+        // Opposites
+        'opp': ['opposite', 'opposite hitter', 'right side hitter'],
+        'opposite': ['opp', 'opposite hitter'],
+        'opposite hitter': ['opp', 'opposite'],
+        
+        // Defensive Specialist/Libero
+        'ds/l': ['defensive specialist', 'libero', 'ds', 'l', 'defensive specialist/libero'],
+        'ds': ['defensive specialist', 'ds/l'],
+        'l': ['libero', 'ds/l'],
+        'defensive specialist': ['ds', 'ds/l'],
+        'libero': ['l', 'ds/l'],
+        'defensive specialist/libero': ['ds/l', 'ds', 'l'],
+        
+        // Right Side (alternative for Opposite)
+        'rs': ['right side', 'right side hitter', 'opp', 'opposite'],
+        'right side': ['rs', 'opp', 'opposite'],
+        'right side hitter': ['rs', 'opp', 'opposite']
+    };
+    
+    // Check if selected position maps to player position
+    const selectedMappings = positionMap[selected] || [];
+    if (selectedMappings.includes(player)) {
+        return true;
+    }
+    
+    // Check if player position maps to selected position  
+    const playerMappings = positionMap[player] || [];
+    if (playerMappings.includes(selected)) {
+        return true;
+    }
+    
+    // Check partial contains (for cases like "DS/L" containing "DS")
+    if (selected.length > 1 && player.includes(selected)) {
+        return true;
+    }
+    
+    if (player.length > 1 && selected.includes(player)) {
+        return true;
+    }
+    
+    return false;
+}
+
+// Helper function to format player name
+function formatPlayerName(player) {
+    return `${player.first} ${player.last}`;
+}
+
+// Export functions for global access
+window.openGroupPhotoModal = openGroupPhotoModal;
+window.closeGroupPhotoModal = closeGroupPhotoModal;
+window.loadPositionPlayers = loadPositionPlayers;
+window.togglePlayerSelection = togglePlayerSelection;
+window.selectAllPlayers = selectAllPlayers;
+window.clearAllPlayers = clearAllPlayers;
+window.startGroupPhoto = startGroupPhoto;
+window.toggleConfirmedPlayer = toggleConfirmedPlayer;
+window.goBackToCamera = goBackToCamera;
+window.saveGroupPhoto = saveGroupPhoto;
+window.takeAnotherGroupPhoto = takeAnotherGroupPhoto;
+window.finishGroupPhotos = finishGroupPhotos;
+window.startNewPosition = startNewPosition;
+window.viewGroupPhotos = viewGroupPhotos;
+window.openUploadModal = openUploadModal;
+window.closeUploadModal = closeUploadModal;
+window.handlePhotoUpload = handlePhotoUpload;
+window.setUploadType = setUploadType;
+window.loadUploadPlayers = loadUploadPlayers;
+window.loadUploadGroupPlayers = loadUploadGroupPlayers;
+window.toggleUploadPlayer = toggleUploadPlayer;
+window.saveIndividualUpload = saveIndividualUpload;
+window.saveGroupUpload = saveGroupUpload;
+window.analyzeUploadedPhoto = analyzeUploadedPhoto;
+window.closeGallery = closeGallery;
+window.filterGallery = filterGallery;
+window.openPhotoModal = openPhotoModal;
