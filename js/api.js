@@ -79,6 +79,28 @@ window.mgaAPI = (function() {
             return data;
         },
 
+        // Submit individual photo
+        async submitPhoto(photoData, playerID) {
+            console.log('Submitting photo for player:', playerID);
+            
+            try {
+                const response = await makeJSONPRequest('submitPhoto', {
+                    photoData: photoData,
+                    playerID: playerID
+                });
+                
+                if (response.success) {
+                    return response;
+                } else {
+                    throw new Error(response.error || 'Failed to submit photo');
+                }
+                
+            } catch (error) {
+                console.error('Error submitting photo:', error);
+                throw error;
+            }
+        },
+
         // NEW: Get settings from the Settings tab (works with your existing structure)
         async getSettings() {
             try {
@@ -141,7 +163,7 @@ window.mgaAPI = (function() {
             return settings.rawDates || {};
         },
 
-        // *** NEW GROUP PHOTOS FUNCTIONS ***
+        // *** GROUP PHOTOS FUNCTIONS ***
         
         // Get group photos with optional filtering
         async getGroupPhotos(location = null, age = null, position = null) {
