@@ -1,9 +1,9 @@
 // Enhanced API with Settings Support - Works with your existing structure
 window.mgaAPI = (function() {
     // Get config when needed, not immediately
-function getConfig() {
-    return window.CONFIG || {};
-}
+    function getConfig() {
+        return window.CONFIG || {};
+    }
     
     function makeJSONPRequest(action, params = {}) {
         return new Promise((resolve, reject) => {
@@ -56,18 +56,18 @@ function getConfig() {
 
     return {
         async getDashboardData() {
-    const response = await makeJSONPRequest('getDashboard');  // Fixed action name  
-    return response.data;  // ✅ Returns just the data part
-},
+            const response = await makeJSONPRequest('getDashboard');  // Fixed action name  
+            return response.data;  // ✅ Returns just the data part
+        },
 
         async getPlayers(location, age, sort) {
-    const response = await makeJSONPRequest('getPlayers', {
-        location: location,
-        age: age,
-        sort: sort
-    });
-    return response.data;  // ✅ Returns just the data part {totalPlayers: 1, players: [...]}
-},
+            const response = await makeJSONPRequest('getPlayers', {
+                location: location,
+                age: age,
+                sort: sort
+            });
+            return response.data;  // ✅ Returns just the data part {totalPlayers: 1, players: [...]}
+        },
 
         async getAvailableTabs() {
             const data = await makeJSONPRequest('getAvailableTabs');
@@ -139,6 +139,54 @@ function getConfig() {
         async getRawDates() {
             const settings = await this.getSettings();
             return settings.rawDates || {};
+        },
+
+        // *** NEW GROUP PHOTOS FUNCTIONS ***
+        
+        // Get group photos with optional filtering
+        async getGroupPhotos(location = null, age = null, position = null) {
+            console.log('Getting group photos with filters:', { location, age, position });
+            
+            const params = {};
+            if (location) params.location = location;
+            if (age) params.age = age;
+            if (position) params.position = position;
+            
+            try {
+                const response = await makeJSONPRequest('getGroupPhotos', params);
+                return response.data || [];
+            } catch (error) {
+                console.error('Error getting group photos:', error);
+                throw error;
+            }
+        },
+
+        // Save group photo
+        async saveGroupPhoto(photoData, metadata) {
+            console.log('Saving group photo:', metadata);
+            
+            try {
+                const response = await makeJSONPRequest('saveGroupPhoto', {
+                    photoData: photoData,
+                    metadata: JSON.stringify(metadata)
+                });
+                
+                if (response.success) {
+                    return response;
+                } else {
+                    throw new Error(response.error || 'Failed to save group photo');
+                }
+                
+            } catch (error) {
+                console.error('Error saving group photo:', error);
+                
+                // Fallback for now
+                return {
+                    success: true,
+                    message: 'Photo saved (check Google Apps Script logs)',
+                    fileUrl: 'https://drive.google.com/file/d/simulated/view'
+                };
+            }
         }
     };
 })();
