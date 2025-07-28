@@ -543,8 +543,6 @@ function goBackToCamera() {
 }
 
 // Save group photo
-// REPLACE the saveGroupPhoto() function in group-photos.js with this:
-
 async function saveGroupPhoto() {
     if (groupPhotoState.confirmedPlayers.length === 0) {
         alert('Please select at least one player in the photo');
@@ -614,6 +612,7 @@ async function saveGroupPhoto() {
         alert(`Error saving photo: ${error.message}\n\nPlease try again or contact support if the problem persists.`);
     }
 }
+
 // Display results
 function displayResults() {
     const messageElement = document.getElementById('results-message');
@@ -702,22 +701,242 @@ function stopGroupCameraStream() {
     groupPhotoState.cameraStream = null;
 }
 
-// View group photos (implement actual functionality)
+// View group photos - UPDATED WITH FULL GALLERY
 async function viewGroupPhotos() {
     if (!authManager.requireAuth()) return;
     
     try {
-        // This would call your API to get group photos
-        // For now, show a simple alert with instructions
-        alert('Group Photos Gallery\n\nTo view group photos:\n1. Check your Google Drive folder\n2. Look for files starting with "GroupPhoto_"\n3. Or implement a gallery view in your Google Apps Script\n\nWould you like me to add a proper gallery interface?');
+        // Hide the main actions menu and show gallery
+        document.querySelector('.group-actions-menu').style.display = 'none';
         
-        // TODO: Implement actual gallery interface
-        // const photos = await window.mgaAPI.getGroupPhotos();
-        // displayGroupPhotosGallery(photos);
+        // Create or show gallery container
+        let galleryContainer = document.getElementById('group-photos-gallery');
+        if (!galleryContainer) {
+            galleryContainer = document.createElement('div');
+            galleryContainer.id = 'group-photos-gallery';
+            galleryContainer.className = 'group-photos-gallery';
+            document.querySelector('.container').appendChild(galleryContainer);
+        }
+        
+        // Show loading state
+        galleryContainer.innerHTML = `
+            <div class="gallery-header">
+                <h2>📸 Group Photos Gallery</h2>
+                <button class="staff-btn secondary-btn" onclick="closeGallery()">← Back to Menu</button>
+            </div>
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Loading group photos...</div>
+            </div>
+        `;
+        galleryContainer.style.display = 'block';
+        
+        // Load photos
+        const photos = await window.mgaAPI.getGroupPhotos();
+        displayGroupPhotosGallery(photos);
         
     } catch (error) {
         console.error('Error loading group photos:', error);
-        alert('Error loading group photos. Please try again.');
+        document.getElementById('group-photos-gallery').innerHTML = `
+            <div class="gallery-header">
+                <h2>📸 Group Photos Gallery</h2>
+                <button class="staff-btn secondary-btn" onclick="closeGallery()">← Back to Menu</button>
+            </div>
+            <div class="error">
+                <div class="error-icon">⚠️</div>
+                <div class="error-message">Failed to load group photos</div>
+                <div class="error-technical">${error.message}</div>
+                <button onclick="viewGroupPhotos()" class="retry-btn">Retry</button>
+            </div>
+        `;
+    }
+}
+
+function displayGroupPhotosGallery(photos) {
+    const galleryContainer = document.getElementById('group-photos-gallery');
+    
+    if (!photos || photos.length === 0) {
+        galleryContainer.innerHTML = `
+            <div class="gallery-header">
+                <h2>📸 Group Photos Gallery</h2>
+                <button class="staff-btn secondary-btn" onclick="closeGallery()">← Back to Menu</button>
+            </div>
+            <div class="empty-gallery">
+                <div class="empty-icon">📷</div>
+                <h3>No Group Photos Yet</h3>
+                <p>Group photos will appear here once you start taking them.</p>
+                <button class="staff-btn checkin-btn" onclick="closeGallery(); openGroupPhotoModal();">Take First Group Photo</button>
+            </div>
+        `;
+        return;
+    }
+    
+    // Group photos by location and age
+    const groupedPhotos = photos.reduce((acc, photo) => {
+        const key = `${photo.location}_${photo.age}`;
+        if (!acc[key]) {
+            acc[key] = {
+                location: photo.location,
+                age: photo.age,
+                photos: []
+            };
+        }
+        acc[key].photos.push(photo);
+        return acc;
+    }, {});
+    
+    const galleryHTML = `
+        <div class="gallery-header">
+            <h2>📸 Group Photos Gallery (${photos.length} photos)</h2>
+            <div class="gallery-actions">
+                <button class="staff-btn photo-btn" onclick="openGroupPhotoModal()">📸 Take More Photos</button>
+                <button class="staff-btn secondary-btn" onclick="closeGallery()">← Back to Menu</button>
+            </div>
+        </div>
+        
+        <div class="gallery-filters">
+            <div class="filter-tabs">
+                <button class="filter-tab active" onclick="filterGallery('all')">All Photos</button>
+                ${Object.keys(groupedPhotos).map(key => {
+                    const group = groupedPhotos[key];
+                    const locationName = group.location === 'NORTH' ? 'North' : 'South';
+                    return `<button class="filter-tab" onclick="filterGallery('${key}')">${locationName} ${group.age} (${group.photos.length})</button>`;
+                }).join('')}
+            </div>
+        </div>
+        
+        <div class="gallery-grid" id="gallery-grid">
+            ${photos.map(photo => createPhotoCard(photo)).join('')}
+        </div>
+    `;
+    
+    galleryContainer.innerHTML = galleryHTML;
+}
+
+function createPhotoCard(photo) {
+    const locationName = photo.location === 'NORTH' ? 'North' : 'South';
+    const playerCount = photo.playerNames.split(',').length;
+    
+    return `
+        <div class="photo-card" data-location="${photo.location}" data-age="${photo.age}">
+            <div class="photo-image-container">
+                ${photo.displayUrl ? 
+                    `<img src="${photo.displayUrl}" alt="Group Photo" class="gallery-photo" onclick="openPhotoModal('${photo.fileUrl}', '${escapeHtml(photo.playerNames)}', '${photo.formattedDate}')">` :
+                    `<div class="photo-placeholder">📷<br><small>Photo not available</small></div>`
+                }
+            </div>
+            <div class="photo-info">
+                <div class="photo-header">
+                    <span class="photo-location">${locationName} ${photo.age}</span>
+                    <span class="photo-date">${photo.formattedDate}</span>
+                </div>
+                <div class="photo-position">${photo.position}</div>
+                <div class="photo-players">
+                    <span class="player-count">${playerCount} players:</span>
+                    <div class="player-names">${photo.playerNames}</div>
+                </div>
+                <div class="photo-actions">
+                    <button class="staff-btn photo-btn" onclick="openPhotoModal('${photo.fileUrl}', '${escapeHtml(photo.playerNames)}', '${photo.formattedDate}')">🔍 View Full Size</button>
+                    <a href="${photo.fileUrl}" target="_blank" class="staff-btn secondary-btn">📁 Open in Drive</a>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function filterGallery(filterKey) {
+    // Update active tab
+    document.querySelectorAll('.filter-tab').forEach(tab => tab.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Show/hide photos
+    const photoCards = document.querySelectorAll('.photo-card');
+    photoCards.forEach(card => {
+        if (filterKey === 'all') {
+            card.style.display = 'block';
+        } else {
+            const [location, age] = filterKey.split('_');
+            const cardLocation = card.dataset.location;
+            const cardAge = card.dataset.age;
+            
+            if (cardLocation === location && cardAge === age) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        }
+    });
+}
+
+function openPhotoModal(fileUrl, playerNames, date) {
+    const modal = document.createElement('div');
+    modal.className = 'modal photo-viewer-modal';
+    modal.innerHTML = `
+        <div class="modal-content photo-viewer">
+            <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+            <div class="photo-viewer-header">
+                <h3>📸 Group Photo - ${date}</h3>
+            </div>
+            <div class="photo-viewer-content">
+                <img src="${convertDriveUrlForDisplay(fileUrl)}" alt="Group Photo" class="full-size-photo">
+                <div class="photo-details">
+                    <h4>Players in this photo:</h4>
+                    <p>${playerNames}</p>
+                    <div class="photo-viewer-actions">
+                        <a href="${fileUrl}" target="_blank" class="staff-btn photo-btn">📁 Open Original in Drive</a>
+                        <button class="staff-btn secondary-btn" onclick="this.closest('.modal').remove()">✕ Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    modal.style.display = 'block';
+    
+    // Close on background click
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+}
+
+function closeGallery() {
+    const galleryContainer = document.getElementById('group-photos-gallery');
+    if (galleryContainer) {
+        galleryContainer.style.display = 'none';
+    }
+    document.querySelector('.group-actions-menu').style.display = 'block';
+}
+
+function convertDriveUrlForDisplay(driveUrl) {
+    if (!driveUrl || driveUrl.trim() === '') {
+        return '';
+    }
+    
+    try {
+        let fileId = null;
+        
+        const viewMatch = driveUrl.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
+        if (viewMatch) {
+            fileId = viewMatch[1];
+        }
+        
+        const openMatch = driveUrl.match(/[?&]id=([a-zA-Z0-9-_]+)/);
+        if (openMatch) {
+            fileId = openMatch[1];
+        }
+        
+        if (fileId) {
+            return `https://lh3.googleusercontent.com/d/${fileId}=w600`;
+        }
+        
+        return driveUrl;
+        
+    } catch (error) {
+        console.error('Error converting Drive URL:', error);
+        return driveUrl;
     }
 }
 
@@ -780,33 +999,7 @@ function setUploadType(type) {
     }
 }
 
-// Additional upload functions would go here...
-// (loadUploadPlayers, saveIndividualUpload, etc.)
-
-// Export functions for global access
-window.openGroupPhotoModal = openGroupPhotoModal;
-window.closeGroupPhotoModal = closeGroupPhotoModal;
-window.loadPositionPlayers = loadPositionPlayers;
-window.togglePlayerSelection = togglePlayerSelection;
-window.selectAllPlayers = selectAllPlayers;
-window.clearAllPlayers = clearAllPlayers;
-window.startGroupPhoto = startGroupPhoto;
-window.toggleConfirmedPlayer = toggleConfirmedPlayer;
-window.goBackToCamera = goBackToCamera;
-window.saveGroupPhoto = saveGroupPhoto;
-window.takeAnotherGroupPhoto = takeAnotherGroupPhoto;
-window.finishGroupPhotos = finishGroupPhotos;
-window.startNewPosition = startNewPosition;
-window.viewGroupPhotos = viewGroupPhotos;
-window.openUploadModal = openUploadModal;
-window.closeUploadModal = closeUploadModal;
-window.handlePhotoUpload = handlePhotoUpload;
-window.setUploadType = setUploadType;
-
-
-// ========================================
-// PHOTO UPLOAD FUNCTIONS - Add to the END of group-photos.js
-// ========================================
+// FIXED UPLOAD FUNCTIONS
 
 // Load players for individual photo upload
 async function loadUploadPlayers() {
@@ -839,11 +1032,16 @@ async function loadUploadPlayers() {
     }
 }
 
-// Load players for group photo upload
+// Load players for group photo upload - FIXED VERSION
 async function loadUploadGroupPlayers() {
     const location = document.getElementById('upload-group-location').value;
     const age = document.getElementById('upload-group-age').value;
     const position = document.getElementById('upload-group-position').value;
+    
+    console.log('=== LOADING GROUP UPLOAD PLAYERS ===');
+    console.log('Location:', location);
+    console.log('Age:', age);
+    console.log('Position filter:', position);
     
     if (!location || !age) {
         document.getElementById('upload-group-players').style.display = 'none';
@@ -852,25 +1050,77 @@ async function loadUploadGroupPlayers() {
     
     try {
         const data = await window.mgaAPI.getPlayers(location, age, 'pinny');
+        console.log('Raw player data:', data);
         
         if (data && data.players) {
             let filteredPlayers = data.players;
+            console.log(`Total players before filtering: ${filteredPlayers.length}`);
             
-            // Filter by position if selected
-            if (position) {
+            // Log all player positions to debug
+            console.log('All player positions:', filteredPlayers.map(p => `${p.first} ${p.last}: "${p.position}"`));
+            
+            // IMPROVED: Filter by position if selected
+            if (position && position !== '') {
+                const originalCount = filteredPlayers.length;
+                
                 filteredPlayers = data.players.filter(player => {
-                    const playerPosition = player.position || '';
-                    return playerPosition.toLowerCase().includes(position.toLowerCase()) ||
-                           position.toLowerCase().includes(playerPosition.toLowerCase());
+                    const playerPosition = (player.position || '').toString().trim();
+                    const selectedPosition = position.toString().trim();
+                    
+                    console.log(`Checking player ${player.first} ${player.last}:`);
+                    console.log(`  Player position: "${playerPosition}"`);
+                    console.log(`  Looking for: "${selectedPosition}"`);
+                    
+                    // Multiple matching strategies
+                    const exactMatch = playerPosition.toLowerCase() === selectedPosition.toLowerCase();
+                    const playerContainsSelected = playerPosition.toLowerCase().includes(selectedPosition.toLowerCase());
+                    const selectedContainsPlayer = selectedPosition.toLowerCase().includes(playerPosition.toLowerCase());
+                    
+                    // Special cases for common abbreviations
+                    const abbreviationMatch = (
+                        (selectedPosition === 'Outside Hitter' && (playerPosition === 'OH' || playerPosition.includes('Outside'))) ||
+                        (selectedPosition === 'Middle Blocker' && (playerPosition === 'MB' || playerPosition.includes('Middle'))) ||
+                        (selectedPosition === 'Right Side' && (playerPosition === 'RS' || playerPosition.includes('Right'))) ||
+                        (selectedPosition === 'Defensive Specialist' && (playerPosition === 'DS' || playerPosition.includes('Defensive'))) ||
+                        (playerPosition === 'Outside Hitter' && (selectedPosition === 'OH' || selectedPosition.includes('Outside'))) ||
+                        (playerPosition === 'Middle Blocker' && (selectedPosition === 'MB' || selectedPosition.includes('Middle'))) ||
+                        (playerPosition === 'Right Side' && (selectedPosition === 'RS' || selectedPosition.includes('Right'))) ||
+                        (playerPosition === 'Defensive Specialist' && (selectedPosition === 'DS' || selectedPosition.includes('Defensive')))
+                    );
+                    
+                    const isMatch = exactMatch || playerContainsSelected || selectedContainsPlayer || abbreviationMatch;
+                    console.log(`  Match result: ${isMatch}`);
+                    
+                    return isMatch;
                 });
+                
+                console.log(`Filtered from ${originalCount} to ${filteredPlayers.length} players for position "${position}"`);
+                
+                if (filteredPlayers.length === 0) {
+                    // Show helpful message
+                    const allPositions = [...new Set(data.players.map(p => p.position).filter(p => p))];
+                    console.log('Available positions:', allPositions);
+                    
+                    document.getElementById('upload-status').innerHTML = `
+                        ⚠️ No players found for position "${position}"<br>
+                        <small>Available positions: ${allPositions.join(', ')}</small>
+                    `;
+                    document.getElementById('upload-status').style.color = '#f39c12';
+                }
             }
             
             // Store for upload
             uploadState.allPlayers = filteredPlayers;
+            uploadState.selectedPlayers = []; // Reset selections
             
             // Display players checklist
             displayUploadGroupChecklist(filteredPlayers);
             document.getElementById('upload-group-players').style.display = 'block';
+            
+            // Clear any previous status messages if we have players
+            if (filteredPlayers.length > 0) {
+                document.getElementById('upload-status').textContent = '';
+            }
         }
     } catch (error) {
         console.error('Error loading group upload players:', error);
@@ -892,11 +1142,11 @@ function displayUploadGroupChecklist(players) {
         <div class="player-checkbox-item">
             <input type="checkbox" 
                    id="upload-player-${player.playerID}" 
-                   onchange="toggleUploadPlayer('${player.playerID}')">
+                   onchange="toggleUploadPlayer('${escapeHtml(player.playerID)}')">
             <label for="upload-player-${player.playerID}">
                 <span class="player-pinny">#${escapeHtml(player.pinny || 'N/A')}</span>
                 <span class="player-name">${escapeHtml(formatPlayerName(player))}</span>
-                <span class="player-school">${escapeHtml(player.school || 'N/A')}</span>
+                <span class="player-position">${escapeHtml(player.position || 'N/A')}</span>
             </label>
         </div>
     `).join('');
@@ -907,14 +1157,21 @@ function displayUploadGroupChecklist(players) {
 // Toggle player selection for upload
 function toggleUploadPlayer(playerID) {
     const player = uploadState.allPlayers.find(p => p.playerID === playerID);
-    if (!player) return;
+    if (!player) {
+        console.log('Player not found:', playerID);
+        return;
+    }
     
     const index = uploadState.selectedPlayers.findIndex(p => p.playerID === playerID);
     if (index > -1) {
         uploadState.selectedPlayers.splice(index, 1);
+        console.log('Removed player:', player.first, player.last);
     } else {
         uploadState.selectedPlayers.push(player);
+        console.log('Added player:', player.first, player.last);
     }
+    
+    console.log('Currently selected players:', uploadState.selectedPlayers.length);
 }
 
 // Save individual photo upload
@@ -997,6 +1254,8 @@ async function saveGroupUpload() {
             source: 'upload'
         };
         
+        console.log('Saving group upload with metadata:', metadata);
+        
         const result = await window.mgaAPI.saveGroupPhoto(uploadState.photoData, metadata);
         
         if (result.success) {
@@ -1022,7 +1281,7 @@ async function saveGroupUpload() {
     }
 }
 
-// Analyze uploaded photo for pinny numbers
+// FIXED: Analyze uploaded photo for pinny numbers with better OCR functions
 async function analyzeUploadedPhoto() {
     if (!uploadState.photoData) {
         alert('Please select a photo first');
@@ -1035,22 +1294,49 @@ async function analyzeUploadedPhoto() {
         status.textContent = 'Analyzing photo for pinny numbers...';
         status.style.color = '#4169E1';
         
-        // Use shared OCR functions (same as in other parts of the app)
-        const text = await detectTextInImage(uploadState.photoData);
-        const allNumbers = extractNumbers(text);
+        console.log('=== STARTING OCR ANALYSIS ===');
+        console.log('Photo data length:', uploadState.photoData.length);
+        
+        // Use Tesseract.js directly (since it's loaded in the page)
+        if (typeof Tesseract === 'undefined') {
+            throw new Error('OCR library not available');
+        }
+        
+        console.log('Tesseract library found, starting recognition...');
+        
+        const { data: { text } } = await Tesseract.recognize(
+            uploadState.photoData,
+            'eng',
+            {
+                logger: m => console.log('OCR Progress:', m)
+            }
+        );
+        
+        console.log('OCR Raw text:', text);
+        
+        // Extract numbers from the text
+        const numbers = text.match(/\d+/g) || [];
+        console.log('All numbers found:', numbers);
         
         // Get expected pinny numbers from available players
-        const expectedPinnies = uploadState.allPlayers.map(p => p.pinny).filter(p => p && p !== 'N/A');
-        const detectedPinnies = allNumbers.filter(num => expectedPinnies.includes(num));
+        const expectedPinnies = uploadState.allPlayers
+            .map(p => p.pinny)
+            .filter(p => p && p !== 'N/A' && p.toString().trim() !== '')
+            .map(p => p.toString());
         
-        console.log('Expected pinnies:', expectedPinnies);
-        console.log('Detected pinnies:', detectedPinnies);
+        console.log('Expected pinny numbers:', expectedPinnies);
+        
+        // Find matches
+        const detectedPinnies = numbers.filter(num => expectedPinnies.includes(num));
+        console.log('Detected pinny matches:', detectedPinnies);
         
         if (detectedPinnies.length > 0) {
             // Auto-select players based on detected pinny numbers
             uploadState.selectedPlayers = uploadState.allPlayers.filter(player => 
-                detectedPinnies.includes(player.pinny)
+                detectedPinnies.includes(player.pinny.toString())
             );
+            
+            console.log('Auto-selected players:', uploadState.selectedPlayers.map(p => `${p.first} ${p.last} (#${p.pinny})`));
             
             // Update checkboxes
             uploadState.allPlayers.forEach(player => {
@@ -1062,27 +1348,51 @@ async function analyzeUploadedPhoto() {
             
             status.textContent = `✅ Found ${detectedPinnies.length} pinny numbers: ${detectedPinnies.join(', ')}`;
             status.style.color = '#28a745';
+        } else if (numbers.length > 0) {
+            status.textContent = `⚠️ Found numbers (${numbers.slice(0, 10).join(', ')}) but none match expected pinnies`;
+            status.style.color = '#f39c12';
         } else {
-            status.textContent = '⚠️ No pinny numbers detected. Please select players manually.';
+            status.textContent = '⚠️ No numbers detected in photo. Please select players manually.';
             status.style.color = '#f39c12';
         }
         
     } catch (error) {
-        console.error('OCR Error:', error);
-        status.textContent = 'Could not analyze photo. Please select players manually.';
-        status.style.color = '#666';
+        console.error('=== OCR ERROR ===', error);
+        status.textContent = `❌ OCR failed: ${error.message}. Please select players manually.`;
+        status.style.color = '#dc3545';
     }
 }
 
-// Helper function to format player name (if not already defined)
+// Helper function to format player name
 function formatPlayerName(player) {
     return `${player.first} ${player.last}`;
 }
 
-// Add these functions to the global exports
+// Export functions for global access
+window.openGroupPhotoModal = openGroupPhotoModal;
+window.closeGroupPhotoModal = closeGroupPhotoModal;
+window.loadPositionPlayers = loadPositionPlayers;
+window.togglePlayerSelection = togglePlayerSelection;
+window.selectAllPlayers = selectAllPlayers;
+window.clearAllPlayers = clearAllPlayers;
+window.startGroupPhoto = startGroupPhoto;
+window.toggleConfirmedPlayer = toggleConfirmedPlayer;
+window.goBackToCamera = goBackToCamera;
+window.saveGroupPhoto = saveGroupPhoto;
+window.takeAnotherGroupPhoto = takeAnotherGroupPhoto;
+window.finishGroupPhotos = finishGroupPhotos;
+window.startNewPosition = startNewPosition;
+window.viewGroupPhotos = viewGroupPhotos;
+window.openUploadModal = openUploadModal;
+window.closeUploadModal = closeUploadModal;
+window.handlePhotoUpload = handlePhotoUpload;
+window.setUploadType = setUploadType;
 window.loadUploadPlayers = loadUploadPlayers;
 window.loadUploadGroupPlayers = loadUploadGroupPlayers;
 window.toggleUploadPlayer = toggleUploadPlayer;
 window.saveIndividualUpload = saveIndividualUpload;
 window.saveGroupUpload = saveGroupUpload;
 window.analyzeUploadedPhoto = analyzeUploadedPhoto;
+window.closeGallery = closeGallery;
+window.filterGallery = filterGallery;
+window.openPhotoModal = openPhotoModal;
