@@ -1033,6 +1033,8 @@ async function loadUploadPlayers() {
 }
 
 // Load players for group photo upload - FIXED VERSION
+// REPLACE the loadUploadGroupPlayers function with this FIXED version:
+
 async function loadUploadGroupPlayers() {
     const location = document.getElementById('upload-group-location').value;
     const age = document.getElementById('upload-group-age').value;
@@ -1041,7 +1043,8 @@ async function loadUploadGroupPlayers() {
     console.log('=== LOADING GROUP UPLOAD PLAYERS ===');
     console.log('Location:', location);
     console.log('Age:', age);
-    console.log('Position filter:', position);
+    console.log('Position filter:', `"${position}"`);
+    console.log('Position is empty?', position === '' || !position);
     
     if (!location || !age) {
         document.getElementById('upload-group-players').style.display = 'none';
@@ -1057,48 +1060,58 @@ async function loadUploadGroupPlayers() {
             console.log(`Total players before filtering: ${filteredPlayers.length}`);
             
             // Log all player positions to debug
-            console.log('All player positions:', filteredPlayers.map(p => `${p.first} ${p.last}: "${p.position}"`));
+            console.log('All player positions:');
+            filteredPlayers.forEach((p, index) => {
+                console.log(`  ${index + 1}. ${p.first} ${p.last}: "${p.position}"`);
+            });
             
-            // IMPROVED: Filter by position if selected
-            if (position && position !== '') {
+            // FIXED: Only filter if a position is actually selected
+            if (position && position.trim() !== '' && position !== 'All Positions') {
+                console.log(`\n=== FILTERING BY POSITION: "${position}" ===`);
                 const originalCount = filteredPlayers.length;
                 
                 filteredPlayers = data.players.filter(player => {
                     const playerPosition = (player.position || '').toString().trim();
                     const selectedPosition = position.toString().trim();
                     
-                    console.log(`Checking player ${player.first} ${player.last}:`);
+                    console.log(`\nChecking player ${player.first} ${player.last}:`);
                     console.log(`  Player position: "${playerPosition}"`);
                     console.log(`  Looking for: "${selectedPosition}"`);
                     
+                    if (!playerPosition) {
+                        console.log(`  ❌ Player has no position data`);
+                        return false;
+                    }
+                    
                     // Multiple matching strategies
                     const exactMatch = playerPosition.toLowerCase() === selectedPosition.toLowerCase();
+                    console.log(`  Exact match: ${exactMatch}`);
+                    
                     const playerContainsSelected = playerPosition.toLowerCase().includes(selectedPosition.toLowerCase());
+                    console.log(`  Player contains selected: ${playerContainsSelected}`);
+                    
                     const selectedContainsPlayer = selectedPosition.toLowerCase().includes(playerPosition.toLowerCase());
+                    console.log(`  Selected contains player: ${selectedContainsPlayer}`);
                     
                     // Special cases for common abbreviations
-                    const abbreviationMatch = (
-                        (selectedPosition === 'Outside Hitter' && (playerPosition === 'OH' || playerPosition.includes('Outside'))) ||
-                        (selectedPosition === 'Middle Blocker' && (playerPosition === 'MB' || playerPosition.includes('Middle'))) ||
-                        (selectedPosition === 'Right Side' && (playerPosition === 'RS' || playerPosition.includes('Right'))) ||
-                        (selectedPosition === 'Defensive Specialist' && (playerPosition === 'DS' || playerPosition.includes('Defensive'))) ||
-                        (playerPosition === 'Outside Hitter' && (selectedPosition === 'OH' || selectedPosition.includes('Outside'))) ||
-                        (playerPosition === 'Middle Blocker' && (selectedPosition === 'MB' || selectedPosition.includes('Middle'))) ||
-                        (playerPosition === 'Right Side' && (selectedPosition === 'RS' || selectedPosition.includes('Right'))) ||
-                        (playerPosition === 'Defensive Specialist' && (selectedPosition === 'DS' || selectedPosition.includes('Defensive')))
-                    );
+                    const abbreviationMatch = checkAbbreviationMatch(selectedPosition, playerPosition);
+                    console.log(`  Abbreviation match: ${abbreviationMatch}`);
                     
                     const isMatch = exactMatch || playerContainsSelected || selectedContainsPlayer || abbreviationMatch;
-                    console.log(`  Match result: ${isMatch}`);
+                    console.log(`  🎯 FINAL RESULT: ${isMatch ? 'INCLUDED' : 'EXCLUDED'}`);
                     
                     return isMatch;
                 });
                 
-                console.log(`Filtered from ${originalCount} to ${filteredPlayers.length} players for position "${position}"`);
+                console.log(`\n📊 FILTERING RESULTS:`);
+                console.log(`  Before: ${originalCount} players`);
+                console.log(`  After: ${filteredPlayers.length} players`);
+                console.log(`  Filtered out: ${originalCount - filteredPlayers.length} players`);
                 
                 if (filteredPlayers.length === 0) {
                     // Show helpful message
                     const allPositions = [...new Set(data.players.map(p => p.position).filter(p => p))];
+                    console.log('❌ No matches found!');
                     console.log('Available positions:', allPositions);
                     
                     document.getElementById('upload-status').innerHTML = `
@@ -1106,7 +1119,14 @@ async function loadUploadGroupPlayers() {
                         <small>Available positions: ${allPositions.join(', ')}</small>
                     `;
                     document.getElementById('upload-status').style.color = '#f39c12';
+                } else {
+                    console.log('✅ Found matches:');
+                    filteredPlayers.forEach(p => {
+                        console.log(`  - ${p.first} ${p.last} (${p.position})`);
+                    });
                 }
+            } else {
+                console.log('⏭️ No position filter applied - showing all players');
             }
             
             // Store for upload
@@ -1118,7 +1138,7 @@ async function loadUploadGroupPlayers() {
             document.getElementById('upload-group-players').style.display = 'block';
             
             // Clear any previous status messages if we have players
-            if (filteredPlayers.length > 0) {
+            if (filteredPlayers.length > 0 && (!position || position.trim() === '' || position === 'All Positions')) {
                 document.getElementById('upload-status').textContent = '';
             }
         }
@@ -1129,6 +1149,35 @@ async function loadUploadGroupPlayers() {
     }
 }
 
+// Helper function for abbreviation matching
+function checkAbbreviationMatch(selectedPosition, playerPosition) {
+    const selected = selectedPosition.toLowerCase();
+    const player = playerPosition.toLowerCase();
+    
+    // Common volleyball position abbreviations
+    const abbreviations = {
+        'outside hitter': ['oh', 'outside'],
+        'middle blocker': ['mb', 'middle'],
+        'right side': ['rs', 'right', 'right side hitter'],
+        'opposite': ['opp', 'opposite hitter'],
+        'setter': ['s', 'set'],
+        'libero': ['lib', 'l'],
+        'defensive specialist': ['ds', 'defensive']
+    };
+    
+    // Check if selected position matches any abbreviations
+    for (const [fullPosition, abbrevs] of Object.entries(abbreviations)) {
+        if (selected === fullPosition || abbrevs.includes(selected)) {
+            // Check if player position matches this category
+            if (player === fullPosition || abbrevs.includes(player) || 
+                fullPosition.includes(player) || player.includes(fullPosition)) {
+                return true;
+            }
+        }
+    }
+    
+    return false;
+}
 // Display group players checklist for upload
 function displayUploadGroupChecklist(players) {
     const container = document.getElementById('upload-group-checklist');
