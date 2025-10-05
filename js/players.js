@@ -446,14 +446,13 @@ async function checkInPlayerForDate(playerID, date, player) {
     try {
         console.log(`Checking in player ${playerID} for date ${date}`);
         
-        // Call your actual check-in API
+        // Call the actual API
         const result = await window.mgaAPI.checkIn({
             playerID: playerID,
             firstName: player.first,
             lastName: player.last,
             location: currentLocation,
-            age: currentAge,
-            date: date
+            age: currentAge
         });
         
         if (result.success) {
@@ -738,12 +737,9 @@ async function submitPhotoToAPI(photoData, player) {
     console.log('Submitting photo for player:', player.playerID);
     console.log('Photo data size:', photoData.length);
     
-    // Call your actual photo submission API
-    const result = await window.mgaAPI.submitPhoto(photoData, player.playerID);
-    
-    return result;
+    // Call the real API instead of the stub
+    return await window.mgaAPI.submitPhoto(photoData, player.playerID);
 }
-
 
 function stopCameraStream() {
     CameraUtils.stopStream(cameraStream);
