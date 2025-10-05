@@ -446,9 +446,15 @@ async function checkInPlayerForDate(playerID, date, player) {
     try {
         console.log(`Checking in player ${playerID} for date ${date}`);
         
-        // For now, simulate the check-in since we need to update the backend
-        // In a real implementation, this would call your API with the date
-        const result = { success: true };
+        // Call your actual check-in API
+        const result = await window.mgaAPI.checkIn({
+            playerID: playerID,
+            firstName: player.first,
+            lastName: player.last,
+            location: currentLocation,
+            age: currentAge,
+            date: date
+        });
         
         if (result.success) {
             // Update local data
@@ -468,6 +474,7 @@ async function checkInPlayerForDate(playerID, date, player) {
         alert(`❌ Check-in failed: ${error.message}`);
     }
 }
+
 
 // Update session stats using location-specific dates
 function updateSessionStats(data) {
@@ -728,12 +735,15 @@ async function submitPhoto() {
 }
 
 async function submitPhotoToAPI(photoData, player) {
-    console.log('Photo submission for player:', player.playerID);
+    console.log('Submitting photo for player:', player.playerID);
     console.log('Photo data size:', photoData.length);
     
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    return { success: true };
+    // Call your actual photo submission API
+    const result = await window.mgaAPI.submitPhoto(photoData, player.playerID);
+    
+    return result;
 }
+
 
 function stopCameraStream() {
     CameraUtils.stopStream(cameraStream);
