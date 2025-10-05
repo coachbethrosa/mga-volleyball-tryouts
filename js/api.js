@@ -74,8 +74,8 @@ window.mgaAPI = (function() {
             return data.data || data;
         },
 
-        async checkInPlayer(playerData) {
-            const data = await makeJSONPRequest('checkInPlayer', playerData);
+        async checkIn(playerData) {
+            const data = await makeJSONPRequest('checkIn', playerData);
             return data;
         },
 
