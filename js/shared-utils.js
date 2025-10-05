@@ -161,6 +161,17 @@ function debugLog(...args) {
     }
 }
 
+// Standard camera constraints for individual photos
+getIndividualPhotoConstraints(isSelfie = true) {
+    return {
+        video: {
+            width: { ideal: 640 },
+            height: { ideal: 640 },
+            facingMode: isSelfie ? 'user' : 'environment'
+        }
+    };
+},
+
 // Export utilities to window for global access
 window.waitForAuth = waitForAuth;
 window.escapeHtml = escapeHtml;
