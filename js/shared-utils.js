@@ -105,12 +105,12 @@ const CameraUtils = {
     },
     
     // Standard camera constraints for individual photos
-    getIndividualPhotoConstraints() {
+    getIndividualPhotoConstraints(isSelfie = true) {
         return {
             video: {
                 width: { ideal: 640 },
                 height: { ideal: 640 },
-                facingMode: 'user'
+                facingMode: isSelfie ? 'user' : 'environment'
             }
         };
     },
@@ -160,17 +160,6 @@ function debugLog(...args) {
         console.log('[MGA Debug]', ...args);
     }
 }
-
-// Standard camera constraints for individual photos
-getIndividualPhotoConstraints(isSelfie = true) {
-    return {
-        video: {
-            width: { ideal: 640 },
-            height: { ideal: 640 },
-            facingMode: isSelfie ? 'user' : 'environment'
-        }
-    };
-},
 
 // Export utilities to window for global access
 window.waitForAuth = waitForAuth;
