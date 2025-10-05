@@ -558,8 +558,9 @@ async function startCamera() {
         
         // Use shared camera constraints - false = NOT selfie, use rear camera
         cameraStream = await navigator.mediaDevices.getUserMedia(CameraUtils.getIndividualPhotoConstraints(false));
-        
+
         video.srcObject = cameraStream;
+        await video.play(); // Force video to start playing
         previewContainer.style.display = 'block';  // Show the container with overlay
         placeholder.style.display = 'none';
         
