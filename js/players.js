@@ -556,8 +556,8 @@ async function startCamera() {
         status.textContent = 'Starting camera...';
         status.style.color = '#4169E1';
         
-        // Use shared camera constraints
-        cameraStream = await navigator.mediaDevices.getUserMedia(CameraUtils.getIndividualPhotoConstraints());
+        // Use shared camera constraints - false = NOT selfie, use rear camera
+        cameraStream = await navigator.mediaDevices.getUserMedia(CameraUtils.getIndividualPhotoConstraints(false));
         
         video.srcObject = cameraStream;
         previewContainer.style.display = 'block';  // Show the container with overlay
